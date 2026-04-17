@@ -10,7 +10,8 @@ python manage.py migrate --noinput
 python manage.py collectstatic --noinput
 
 # Create superuser if it doesn't exist
-python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@example.com', 'admin@123456')"
+# Create or update superuser
+python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); u, created = User.objects.get_or_create(username='admin', defaults={'email': 'admin@example.com', 'is_staff': True, 'is_superuser': True}); u.set_password('admin@123456'); u.save(); print('Admin user updated/created successfully')"
 
 # Start gunicorn
 gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120
