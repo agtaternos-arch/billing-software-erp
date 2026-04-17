@@ -37,6 +37,9 @@ ENV DJANGO_SETTINGS_MODULE=config.settings
 # Copy application code
 COPY . .
 
+# Make start script executable
+RUN chmod +x start.sh
+
 # Create necessary directories
 RUN mkdir -p logs media staticfiles
 

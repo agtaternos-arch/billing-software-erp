@@ -3,7 +3,7 @@ services:
     name: billing-erp
     runtime: docker
     plan: free
-    preDeployCommand: "python manage.py migrate --noinput"
+    dockerCommand: "/app/start.sh"
     envVars:
       - key: DEBUG
         value: "False"
