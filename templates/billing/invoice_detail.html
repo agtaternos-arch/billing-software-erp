@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Invoice #{{ invoice.invoice_number }} | Torvix ERP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .invoice-detail-card {
+        padding: 3rem;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        color: #f8fafc;
+    }
+
+    .invoice-header {
+        border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .invoice-table thead th {
+        background: rgba(255, 255, 255, 0.05);
+        color: #94a3b8;
+        padding: 1rem;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+    }
+
+    .invoice-table tbody td {
+        padding: 1.25rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .total-section {
+        background: rgba(139, 92, 246, 0.05);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="mb-4">
+        <a href="{% url 'billing:invoice_list' %}" class="btn btn-outline-secondary btn-sm"><i
+                class="fas fa-arrow-left me-2"></i> BACK TO HISTORY</a>
+    </div>
+
+    <div class="invoice-detail-card glass-panel">
+        <!-- Invoice Header -->
+        <div class="row invoice-header">
+            <div class="col-md-6">
+                <h2 class="brand-font glow-cyan mb-1">INVOICE <span class="text-white">DETAILS</span></h2>
+                <p class="text-secondary">Reference: #{{ invoice.invoice_number }}</p>
+                <div class="mt-4">
+                    <div class="small text-secondary mb-1">CUSTOMER</div>
+                    <h5 class="fw-bold">{{ invoice.customer.name|default:"WALK-IN CUSTOMER" }}</h5>
+                    <p class="text-secondary small">{{ invoice.customer.phone|default:"N/A" }}</p>
+                </div>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <div class="brand-font h4 glow-purple mb-4">TORVIX ERP CORE</div>
+                <div class="text-secondary small">ISSUED ON</div>
+                <div class="fw-bold mb-3">{{ invoice.created_at|date:"d M Y, H:i" }}</div>
+                <div class="text-secondary small">PAYMENT METHOD</div>
+                <div class="status-badge bg-primary bg-opacity-25 text-primary d-inline-block">{{ invoice.payment_method|upper }}</div>
+            </div>
+        </div>
+
+        <!-- Line Items -->
+        <div class="table-responsive">
+            <table class="table text-white invoice-table">
+                <thead>
+                    <tr>
+                        <th>PRODUCT DESCRIPTION</th>
+                        <th class="text-center">UNIT PRICE</th>
+                        <th class="text-center">QUANTITY</th>
+                        <th class="text-end">TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.items.all %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ item.product.name }}</div>
+                            <div class="small text-secondary">Product Code: {{ item.product.sku|default:"N/A" }}</div>
+                        </td>
+                        <td class="text-center">₹{{ item.unit_price|floatformat:2 }}</td>
+                        <td class="text-center">{{ item.quantity }}</td>
+                        <td class="text-end fw-bold">₹{{ item.total_price|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary -->
+        <div class="row justify-content-end">
+            <div class="col-md-5">
+                <div class="total-section">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary">SUBTOTAL</span>
+                        <span class="fw-bold">₹{{ invoice.subtotal|floatformat:2 }}</span>
+                    </div>
+                    <div
+                        class="d-flex justify-content-between mb-3 border-bottom border-secondary border-opacity-25 pb-3">
+                        <span class="text-secondary text-uppercase small">TAX (GST {{ invoice.tax_rate|floatformat:0 }}%)</span>
+                        <span class="fw-bold text-danger">₹{{ invoice.tax_amount|floatformat:2 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <h4 class="brand-font mb-0 text-glow-cyan">TOTAL AMOUNT</h4>
+                        <h3 class="brand-font mb-0 text-cyan">₹{{ invoice.total_amount|floatformat:2 }}</h3>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button class="btn btn-primary py-3 brand-font" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i> PRINT THERMAL RECEIPT
+                    </button>
+                    <button class="btn btn-outline-secondary py-2 small">
+                        <i class="fas fa-external-link-alt me-2"></i> OPEN PDF VIEW
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

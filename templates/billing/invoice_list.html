@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Invoice History | Torvix ERP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .invoice-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s;
+    }
+    .invoice-card:hover {
+        background: rgba(255, 255, 255, 0.06);
+        transform: translateY(-2px);
+    }
+    .invoice-table thead th {
+        background: rgba(255, 255, 255, 0.05);
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.8rem;
+    }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="brand-font mb-0 text-glow-cyan">INVOICE <span class="text-white">HISTORY</span></h2>
+            <p class="text-secondary mb-0">Manage and audit all business transactions</p>
+        </div>
+        <div class="d-flex">
+            <a href="{% url 'billing:pos_terminal' %}" class="btn btn-outline-success me-2 brand-font"><i class="fas fa-cash-register me-2"></i> BACK TO POS</a>
+            <a href="{% url 'accounts:admin_dashboard' %}" class="btn btn-outline-secondary me-2 brand-font"><i class="fas fa-arrow-left me-2"></i> COMMAND CENTER</a>
+            <a href="{% url 'billing:pos_terminal' %}" class="btn btn-primary brand-font"><i class="fas fa-plus me-2"></i> NEW BILL</a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="glass-panel p-4 mb-4">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label text-secondary small">SEARCH INVOICE</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-secondary border-opacity-25 text-secondary"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Invoice # or Customer Name">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-secondary small">PAYMENT STATUS</label>
+                <select class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="paid">Paid</option>
+                    <option value="pending">Pending</option>
+                    <option value="overdue">Overdue</option>
+                </select>
+            </div>
+             <div class="col-md-2">
+                <label class="form-label text-secondary small">DATE RANGE</label>
+                <select class="form-select">
+                    <option value="">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="this_month">This Month</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main List -->
+    <div class="glass-panel p-4">
+        <div class="table-responsive">
+            <table class="table text-white invoice-table">
+                <thead>
+                    <tr>
+                        <th>INVOICE #</th>
+                        <th>DATE</th>
+                        <th>CUSTOMER</th>
+                        <th>TOTAL AMOUNT</th>
+                        <th>STATUS</th>
+                        <th>METHOD</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr>
+                        <td class="brand-font text-cyan">{{ invoice.invoice_number }}</td>
+                        <td class="text-secondary small">{{ invoice.created_at|date:"d M Y, H:i" }}</td>
+                        <td>
+                            <div class="fw-bold">{{ invoice.customer.name|default:"WALK-IN CUSTOMER" }}</div>
+                            <div class="small text-secondary">{{ invoice.customer.phone|default:"N/A" }}</div>
+                        </td>
+                        <td class="text-glow-purple fw-bold h5">₹{{ invoice.total_amount|floatformat:2 }}</td>
+                        <td>
+                            <span class="status-badge bg-success bg-opacity-25 text-success">PAID</span>
+                        </td>
+                        <td><i class="fas fa-credit-card me-2 opacity-50"></i>{{ invoice.payment_method|upper }}</td>
+                        <td>
+                            <a href="{% url 'billing:invoice_detail' invoice.id %}" class="btn btn-sm btn-outline-info me-1" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="{% url 'billing:invoice_pdf' invoice.id %}" target="_blank" class="btn btn-sm text-white me-1" style="background: #4a7c59;" title="A4 PDF Invoice"><i class="fas fa-file-pdf"></i> A4</a>
+                            <a href="{% url 'billing:invoice_thermal' invoice.id %}" class="btn btn-sm text-white me-1 thermal-btn" data-size="58" style="background: #334155;" title="Thermal Receipt 58mm"><i class="fas fa-receipt"></i> 58mm</a>
+                            <a href="{% url 'billing:invoice_thermal' invoice.id %}" class="btn btn-sm text-white thermal-btn" data-size="80" style="background: #1e293b;" title="Thermal Receipt 80mm"><i class="fas fa-receipt"></i> 80mm</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-secondary">
+                            <i class="fas fa-file-invoice fa-3x mb-3 opacity-25"></i>
+                            <p>No transactions found for the selected period.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.thermal-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const size = this.dataset.size;
+        const url = this.href + '?size=' + size;
+        const w = size === '58' ? 350 : 450;
+        window.open(url, 'ThermalPrint', 'width=' + w + ',height=600');
+    });
+});
+</script>
+{% endblock %}

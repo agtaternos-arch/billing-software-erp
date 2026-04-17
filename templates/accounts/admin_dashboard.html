@@ -1,0 +1,818 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Command Center | Torvix ERP{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --glass-bg: rgba(15, 23, 42, 0.85);
+        --accent-blue: #3b82f6;
+        --accent-purple: #8b5cf6;
+        --neon-cyan: #06b6d4;
+        --neon-green: #10b981;
+        --neon-red: #ef4444;
+    }
+
+    body {
+        background-color: #0f172a;
+        color: #f8fafc;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    .brand-font { font-family: 'Orbitron', sans-serif; }
+    
+    .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    .admin-container {
+        padding: 2rem;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    .sidebar-nav {
+        height: calc(100vh - 4rem);
+        position: sticky;
+        top: 2rem;
+    }
+
+    .nav-item-glass {
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 0.5rem;
+        border-radius: 12px;
+        color: #94a3b8;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+    }
+
+    .nav-item-glass:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+        transform: translateX(5px);
+    }
+
+    .nav-item-glass.active {
+        background: linear-gradient(45deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+        border-left: 4px solid var(--accent-blue);
+        color: #fff;
+    }
+
+    .kpi-card {
+        padding: 1.5rem;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0.5rem 0;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    .glow-cyan { text-shadow: 0 0 15px rgba(6, 182, 212, 0.5); color: var(--neon-cyan); }
+    .glow-purple { text-shadow: 0 0 15px rgba(139, 92, 246, 0.5); color: var(--accent-purple); }
+
+    .chart-container {
+        height: 400px;
+        padding: 1.5rem;
+    }
+
+    .staff-table thead th {
+        background: rgba(255, 255, 255, 0.05);
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.8rem;
+        border: none;
+        padding: 1rem;
+    }
+
+    .staff-table tbody td {
+        padding: 1rem;
+        border-color: rgba(255, 255, 255, 0.05);
+        vertical-align: middle;
+    }
+
+    .status-pill {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    /* Form Overrides */
+    .form-control, .form-select {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #fff;
+        padding: 0.75rem 1rem;
+    }
+    .form-select option {
+        background-color: #1e293b;
+        color: #fff;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--accent-blue);
+        color: #fff;
+        box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-submit-staff {
+        background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
+        border: none;
+        color: #fff;
+        font-weight: 700;
+        padding: 0.75rem 2rem;
+        border-radius: 12px;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    /* ===== ADMIN PANEL BUTTON OVERRIDES - MAXIMUM VISIBILITY ===== */
+    .admin-container .btn-neon-purple {
+        background: #a855f7 !important;
+        color: #ffffff !important;
+        border: 2px solid #d8b4fe !important;
+        padding: 10px 22px !important;
+        font-family: 'Orbitron', sans-serif !important;
+        font-size: 13px !important;
+        font-weight: 800 !important;
+        letter-spacing: 1.5px !important;
+        border-radius: 8px !important;
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.5) !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        text-transform: uppercase !important;
+        display: inline-block !important;
+    }
+    .admin-container .btn-neon-purple:hover {
+        background: #c084fc !important;
+        box-shadow: 0 0 30px rgba(168, 85, 247, 0.8) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    .admin-container .btn-neon {
+        background: #3b82f6 !important;
+        color: #ffffff !important;
+        border: 1px solid #93c5fd !important;
+        padding: 8px 18px !important;
+        font-family: 'Orbitron', sans-serif !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+        letter-spacing: 1px !important;
+        border-radius: 8px !important;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5) !important;
+        opacity: 1 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="row g-4">
+        <!-- Sidebar Navigation -->
+        <div class="col-md-2">
+            <div class="glass-panel sidebar-nav p-3">
+                <div class="brand-font text-center mb-5 mt-2">
+                    <h4 class="glow-cyan">TORVIX <span class="text-white">ERP</span></h4>
+                    <span class="small text-secondary">ADMIN CORE v2.4</span>
+                </div>
+                
+                <nav>
+                    <a href="#" class="nav-item-glass active">
+                        <i class="fas fa-th-large me-3"></i> OVERVIEW
+                    </a>
+                    <a href="{% url 'billing:invoice_list' %}" class="nav-item-glass">
+                        <i class="fas fa-file-invoice me-3"></i> INVOICES
+                    </a>
+                    <a href="{% url 'inventory:product_list' %}" class="nav-item-glass">
+                        <i class="fas fa-boxes me-3"></i> INVENTORY
+                    </a>
+                    <a href="{% url 'customers:customer_list' %}" class="nav-item-glass">
+                        <i class="fas fa-users me-3"></i> CUSTOMERS
+                    </a>
+                    <a href="{% url 'inventory:supplier_list' %}" class="nav-item-glass">
+                        <i class="fas fa-truck-loading me-3"></i> SUPPLIERS
+                    </a>
+                    <hr class="border-secondary border-opacity-25 my-4">
+                    <a href="{% url 'accounts:settings' %}" class="nav-item-glass">
+                        <i class="fas fa-cog me-3"></i> SETTINGS
+                    </a>
+                    <a href="{% url 'accounts:logout' %}" class="nav-item-glass text-danger">
+                        <i class="fas fa-power-off me-3"></i> DISCONNECT
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Area -->
+        <div class="col-md-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="brand-font mb-0">COMMAND <span class="text-glow-purple">CENTER</span></h2>
+                    <p class="text-secondary mb-0">System synchronization: 100% stable</p>
+                </div>
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'billing:pos_terminal' %}" class="btn btn-neon fw-bold shadow-lg me-2" style="background:#10b981!important; border-color:#059669!important;">
+                        <i class="fas fa-cash-register me-2"></i> POS TERMINAL
+                    </a>
+                    <button class="btn btn-neon-purple fw-bold shadow-lg me-2" data-bs-toggle="modal" data-bs-target="#discountModal" style="background: #eab308 !important; border-color: #fef08a !important; color: #000 !important;">
+                        <i class="fas fa-tags me-2"></i> OFFERS
+                    </button>
+                    <button class="btn btn-neon-purple fw-bold shadow-lg me-2" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                        <i class="fas fa-user-plus me-2"></i> NEW STAFF
+                    </button>
+                    <div class="badge glass-panel p-2" style="cursor: pointer; border: 1px solid rgba(34, 197, 94, 0.4);">
+                        <i class="fas fa-check-circle me-1 text-success"></i> System Status: Online
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="kpi-card">
+                        <div class="small text-secondary text-uppercase letter-spacing-1">Monthly Revenue</div>
+                        <div class="kpi-value glow-cyan">₹{{ monthly_revenue|floatformat:0 }}</div>
+                        <div class="metric-trend text-success"><i class="fas fa-arrow-up"></i> 12% vs last month</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="kpi-card">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="small text-secondary text-uppercase letter-spacing-1">Total Expenses</div>
+                            <button class="btn btn-sm btn-outline-danger py-1 px-2" data-bs-toggle="modal" data-bs-target="#addExpenseModal" style="font-weight: 800; font-family: 'Orbitron';"><i class="fas fa-plus"></i> EXPENSE</button>
+                        </div>
+                        <div class="kpi-value text-danger">
+                            {% if monthly_expenses > 0 %}
+                                ₹{{ monthly_expenses|floatformat:0 }}
+                            {% else %}
+                                <span style="font-size: 14px; letter-spacing: 0;">No expenses added</span>
+                            {% endif %}
+                        </div>
+                        <div class="metric-trend text-danger"><i class="fas fa-arrow-up"></i> 5% vs last month</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="kpi-card">
+                        <div class="small text-secondary text-uppercase letter-spacing-1">Net Profit</div>
+                        <div class="kpi-value glow-purple">₹{{ net_profit|floatformat:0 }}</div>
+                        <div class="metric-trend text-success"><i class="fas fa-arrow-up"></i> 8% margins</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="kpi-card">
+                        <div class="small text-secondary text-uppercase letter-spacing-1">Active Staff</div>
+                        <div class="kpi-value text-primary">{{ staff_profiles.count }}</div>
+                        <div class="metric-trend text-info">2 currently on shift</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart and Activity -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-8">
+                    <div class="glass-panel p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="brand-font mb-0">SALES PERFORMANCE</h5>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span style="width:12px;height:12px;background:linear-gradient(135deg,#8b5cf6,#6366f1);border-radius:3px;display:inline-block;"></span>
+                                    <span class="small text-secondary">Revenue</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span style="width:12px;height:3px;background:#10b981;display:inline-block;border-radius:2px;"></span>
+                                    <span class="small text-secondary">Trend</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="adminSalesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-panel p-4 h-100">
+                        <h5 class="brand-font mb-4">TOP PRODUCTS</h5>
+                        {% for p in top_products %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-primary me-3">{{ forloop.counter }}</div>
+                                <div>
+                                    <div class="fw-bold">{{ p.product__name }}</div>
+                                    <div class="small text-secondary">{{ p.total_qty }} units sold</div>
+                                </div>
+                            </div>
+                            <div class="text-glow-purple fw-bold">₹{{ p.total_revenue|floatformat:0 }}</div>
+                        </div>
+                        {% empty %}
+                        <div class="text-secondary small text-center py-4"><i class="fas fa-chart-bar fa-2x mb-2 opacity-25 d-block"></i>No sales data yet</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Staff Management -->
+            <div class="glass-panel p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="brand-font mb-0">STAFF DIRECTORY</h5>
+                    <div class="search-box">
+                        <input type="text" class="form-control form-control-sm" placeholder="Search staff...">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table staff-table text-white">
+                        <thead>
+                            <tr>
+                                <th>STAFF MEMBER</th>
+                                <th>ROLE</th>
+                                <th>BASE WAGE / MONTH</th>
+                                <th>SHIFT STATUS</th>
+                                <th>SHIFT PERIOD</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for profile in staff_profiles %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm me-3 bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-user small"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ profile.user.get_full_name }}</div>
+                                            <div class="small text-secondary">{{ profile.user.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="status-pill bg-primary bg-opacity-25 text-primary">{{ profile.role|upper }}</span></td>
+                                <td class="text-glow-purple fw-bold">₹{{ profile.base_wage }}</td>
+                                <td><span class="status-pill bg-success bg-opacity-25 text-success">Active</span></td>
+                                <td class="small text-secondary">{{ profile.shift_start|default:"N/A" }} - {{ profile.shift_end|default:"N/A" }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-neon" onclick="openEditStaff({{ profile.id }}, '{{ profile.user.get_full_name|escapejs }}', '{{ profile.user.first_name|escapejs }}', '{{ profile.user.last_name|escapejs }}', '{{ profile.role }}', '{{ profile.base_wage }}', '{{ profile.shift_start|default:"" }}', '{{ profile.shift_end|default:"" }}', {{ profile.user.id }})"><i class="fas fa-edit"></i></button>
+                                    {% if profile.user != request.user %}
+                                    <form method="POST" action="{% url 'accounts:delete_staff' profile.id %}" style="display:inline;" onsubmit="return confirm('Deactivate {{ profile.user.get_full_name|escapejs }}?')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-ban"></i></button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- System Activity Logs -->
+            <div class="glass-panel p-4">
+                <h5 class="brand-font mb-4">SYSTEM AUDIT LOG</h5>
+                <div class="audit-timeline">
+                    {% for log in recent_logs %}
+                    <div class="d-flex mb-3">
+                        <div class="me-4 text-secondary small" style="width: 80px;">{{ log.timestamp|date:"H:i:s" }}</div>
+                        <div class="activity-content">
+                            <div class="small fw-bold">{{ log.user.username|upper }} executed {{ log.action|upper }}</div>
+                            <div class="text-secondary small">{{ log.model_name }}</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-secondary small text-center py-3">No audit records yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content glass-panel border-0" style="background: #1e293b;">
+            <div class="modal-header border-secondary border-opacity-25 pb-0">
+                <h5 class="brand-font glow-cyan"><i class="fas fa-shield-alt me-2"></i> AUTHORIZE NEW STAFF MEMBER</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'accounts:register' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body py-4">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label text-secondary small fw-bold">USERNAME</label>
+                            <input type="text" name="username" class="form-control" required placeholder="staff.name">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">FIRST NAME</label>
+                            <input type="text" name="first_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">LAST NAME</label>
+                            <input type="text" name="last_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label text-secondary small fw-bold">EMAIL ADDRESS</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">SYS ROLE</label>
+                            <select name="role" class="form-select">
+                                <option value="cashier">Cashier</option>
+                                <option value="manager">Manager</option>
+                                <option value="owner">Business Owner</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">BASE WAGE (₹)</label>
+                            <input type="number" name="base_wage" class="form-control" step="0.01" value="15000">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">SHIFT START</label>
+                            <input type="time" name="shift_start" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">SHIFT END</label>
+                            <input type="time" name="shift_end" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">PASSWORD</label>
+                            <input type="password" name="password" class="form-control" required minlength="8" placeholder="Min 8 characters">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">CONFIRM PASSWORD</label>
+                            <input type="password" name="password_confirm" class="form-control" required minlength="8" placeholder="Repeat password">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">ABORT</button>
+                    <button type="submit" class="btn btn-submit-staff flex-grow-1"><i class="fas fa-shield-alt me-2"></i>AUTHORIZE & CREATE</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Staff Modal -->
+<div class="modal fade" id="editStaffModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-panel border-0" style="background: #1e293b;">
+            <div class="modal-header border-secondary border-opacity-25 pb-0">
+                <h5 class="brand-font glow-cyan"><i class="fas fa-user-edit me-2"></i> EDIT STAFF</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'accounts:user_list' %}" id="editStaffForm">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" id="editStaffUserId">
+                <div class="modal-body py-4">
+                    <div class="mb-3">
+                        <div class="fw-bold text-white fs-5 mb-3" id="editStaffName">Staff Member</div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">FIRST NAME</label>
+                            <input type="text" name="first_name" id="editFirstName" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">LAST NAME</label>
+                            <input type="text" name="last_name" id="editLastName" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">BASE WAGE (₹)</label>
+                            <input type="number" name="wage" id="editWage" class="form-control" step="0.01">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">ROLE</label>
+                            <select name="role" id="editRole" class="form-select" disabled>
+                                <option value="cashier">Cashier</option>
+                                <option value="manager">Manager</option>
+                                <option value="owner">Business Owner</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">SHIFT START</label>
+                            <input type="time" name="shift_start" id="editShiftStart" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">SHIFT END</label>
+                            <input type="time" name="shift_end" id="editShiftEnd" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn btn-submit-staff flex-grow-1"><i class="fas fa-save me-2"></i>SAVE CHANGES</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Expense Modal (The Sheet) -->
+<div class="modal fade" id="addExpenseModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-panel border-0" style="background: #1e293b;">
+            <div class="modal-header border-secondary border-opacity-25 pb-0">
+                <h5 class="brand-font glow-purple text-danger"><i class="fas fa-receipt me-2"></i> RECORD NEW EXPENSE</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'billing:expense_create' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body py-4">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label text-secondary small fw-bold">EXPENSE TITLE</label>
+                            <input type="text" name="title" class="form-control" required placeholder="e.g. Electricity Bill, Shop Rent">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">CATEGORY</label>
+                            <select name="category" class="form-select" style="height: 48px;">
+                                <option value="utilities">Utilities</option>
+                                <option value="rent">Rent</option>
+                                <option value="salary">Salary</option>
+                                <option value="supplies">Office Supplies</option>
+                                <option value="transportation">Transportation</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-bold">TOTAL PRICE (₹)</label>
+                            <input type="number" name="amount" class="form-control" step="0.01" required placeholder="0.00" style="height: 48px; font-size: 1.25rem; font-weight: bold; color: #fff !important; background: rgba(0,0,0,0.2);">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label text-secondary small fw-bold">DESCRIPTION / NOTES</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Enter details about this expense..."></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label text-secondary small fw-bold">DATE</label>
+                            <input type="date" name="date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn btn-submit-staff flex-grow-1" style="background: #dc2626 !important; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4) !important;">
+                        <i class="fas fa-plus me-2"></i>ADD TO EXPENSES
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Discount / Offer Modal -->
+<div class="modal fade" id="discountModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-panel border-0" style="background: #1e293b;">
+            <div class="modal-header border-secondary border-opacity-25 pb-0">
+                <h5 class="brand-font glow-cyan text-warning"><i class="fas fa-tags me-2"></i> MANAGE OFFERS</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'inventory:update_discount' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body py-4">
+                    <!-- Live Offers Section -->
+                    <div class="mb-4">
+                        <label class="form-label text-info small fw-bold text-uppercase letter-spacing-1">Active Offers</label>
+                        <div class="glass-panel p-2" style="max-height: 150px; overflow-y: auto; background: rgba(255,255,255,0.02);">
+                            <table class="table table-sm table-borderless mb-0 text-white" style="font-size: 0.85rem;">
+                                <tbody>
+                                    {% for product in products %}
+                                        {% if product.discount_percent > 0 %}
+                                        <tr>
+                                            <td>{{ product.name }}</td>
+                                            <td class="text-warning fw-bold">{{ product.discount_percent }}% OFF</td>
+                                            <td class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger border-0 p-0" onclick="removeOffer({{ product.id }})">
+                                                    <i class="fas fa-times-circle"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <hr class="border-secondary border-opacity-25 my-4">
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label text-secondary small fw-bold">SELECT PRODUCT</label>
+                            <select name="product_id" class="form-select" required style="max-height: 200px; overflow-y: auto;">
+                                {% for product in products %}
+                                    <option value="{{ product.id }}">
+                                        {{ product.name }} (₹{{ product.unit_price }})
+                                        {% if product.discount_percent > 0 %}
+                                            - currently {{ product.discount_percent }}% OFF
+                                        {% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 mt-4">
+                            <label class="form-label text-secondary small fw-bold">DISCOUNT %</label>
+                            <div class="input-group">
+                                <input type="number" name="discount_percent" class="form-control" step="1" min="0" max="100" required placeholder="e.g. 20" style="font-size: 1.25rem; font-weight: bold; color: #fff !important; background: rgba(0,0,0,0.2);">
+                                <span class="input-group-text bg-warning text-dark fw-bold border-0"><i class="fas fa-percent"></i></span>
+                            </div>
+                            <small class="text-secondary mt-2 d-block"><i class="fas fa-info-circle"></i> Set to 0 to remove discount.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn btn-submit-staff flex-grow-1" style="background: #eab308 !important; color: #000 !important; box-shadow: 0 4px 15px rgba(234, 179, 8, 0.4) !important;">
+                        <i class="fas fa-check-circle me-2"></i>APPLY OFFER
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<form id="removeOfferForm" action="{% url 'inventory:update_discount' %}" method="POST" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="product_id" id="removeOfferProductId">
+    <input type="hidden" name="discount_percent" value="0">
+</form>
+
+<script>
+    function removeOffer(productId) {
+        if(confirm('Are you sure you want to remove this offer?')) {
+            document.getElementById('removeOfferProductId').value = productId;
+            document.getElementById('removeOfferForm').submit();
+        }
+    }
+</script>
+
+{{ sales_labels|json_script:"labels-data" }}
+{{ sales_values|json_script:"values-data" }}
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+
+<script>
+// ===== Edit Staff Modal Logic =====
+function openEditStaff(profileId, fullName, firstName, lastName, role, wage, shiftStart, shiftEnd, userId) {
+    document.getElementById('editStaffName').textContent = fullName || 'Staff Member';
+    document.getElementById('editStaffUserId').value = userId;
+    document.getElementById('editFirstName').value = firstName;
+    document.getElementById('editLastName').value = lastName;
+    document.getElementById('editWage').value = parseFloat(wage) || 0;
+    document.getElementById('editRole').value = role;
+    // Convert shift times - handle "HH:MM:SS" Django format to "HH:MM" for input[type=time]
+    document.getElementById('editShiftStart').value = shiftStart ? shiftStart.substring(0, 5) : '';
+    document.getElementById('editShiftEnd').value = shiftEnd ? shiftEnd.substring(0, 5) : '';
+    new bootstrap.Modal(document.getElementById('editStaffModal')).show();
+}
+
+// ===== Sales Performance Chart =====
+document.addEventListener('DOMContentLoaded', function() {
+    const labels = JSON.parse(document.getElementById('labels-data').textContent);
+    const values = JSON.parse(document.getElementById('values-data').textContent);
+
+    const ctx = document.getElementById('adminSalesChart');
+    if (ctx) {
+        const chartCtx = ctx.getContext('2d');
+
+        // Create gradient for bars
+        const barGradient = chartCtx.createLinearGradient(0, 0, 0, 400);
+        barGradient.addColorStop(0, 'rgba(139, 92, 246, 0.8)');
+        barGradient.addColorStop(1, 'rgba(99, 102, 241, 0.2)');
+
+        // Create gradient for line fill
+        const lineGradient = chartCtx.createLinearGradient(0, 0, 0, 400);
+        lineGradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+        lineGradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+        // Calculate moving average for trend line
+        const trendData = values.map((val, i, arr) => {
+            if (i < 2) return val;
+            const window = arr.slice(Math.max(0, i - 2), i + 1);
+            return window.reduce((a, b) => a + b, 0) / window.length;
+        });
+
+        // Find max value for annotation
+        const maxVal = Math.max(...values);
+        const maxIdx = values.indexOf(maxVal);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Daily Revenue',
+                        data: values,
+                        backgroundColor: barGradient,
+                        borderColor: 'rgba(139, 92, 246, 0.6)',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.7,
+                        order: 2
+                    },
+                    {
+                        label: 'Trend',
+                        data: trendData,
+                        type: 'line',
+                        borderColor: '#10b981',
+                        backgroundColor: lineGradient,
+                        borderWidth: 2.5,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#10b981',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2,
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleFont: { family: 'Orbitron', size: 11, weight: '700' },
+                        bodyFont: { family: 'Rajdhani', size: 14, weight: '600' },
+                        titleColor: '#94a3b8',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(139, 92, 246, 0.3)',
+                        borderWidth: 1,
+                        padding: 14,
+                        cornerRadius: 10,
+                        displayColors: true,
+                        boxPadding: 6,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) {
+                                    label += '₹' + context.parsed.y.toLocaleString('en-IN');
+                                }
+                                if (context.datasetIndex === 0 && context.dataIndex === maxIdx && maxVal > 0) {
+                                    label += ' 🔥 Peak';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.03)', drawBorder: false },
+                        ticks: {
+                            color: '#64748b',
+                            font: { family: 'Rajdhani', size: 11, weight: '600' },
+                            maxRotation: 45,
+                            minRotation: 0
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                        ticks: {
+                            color: '#64748b',
+                            font: { family: 'Rajdhani', size: 12, weight: '600' },
+                            callback: function(value) {
+                                if (value >= 1000) return '₹' + (value/1000).toFixed(0) + 'K';
+                                return '₹' + value;
+                            },
+                            maxTicksLimit: 6
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

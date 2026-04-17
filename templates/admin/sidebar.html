@@ -1,0 +1,150 @@
+<!-- Admin Panel Navigation Sidebar -->
+<nav class="admin-sidebar navbar-dark bg-dark flex-column" style="width: 250px; min-height: 100vh; position: fixed; left: 0; top: 0; overflow-y: auto;">
+    <!-- Branding -->
+    <div class="admin-brand p-3 border-bottom border-secondary">
+        <a href="{% url 'adminpanel:dashboard' %}" class="text-decoration-none text-white d-flex align-items-center">
+            <i class="fas fa-crown me-2" style="color: #ffc107; font-size: 20px;"></i>
+            <div>
+                <strong style="font-size: 16px;">Admin Panel</strong><br>
+                <small class="text-light" style="font-size: 12px;">Control Center</small>
+            </div>
+        </a>
+    </div>
+
+    <!-- User Info -->
+    <div class="admin-user-info p-3 border-bottom border-secondary text-white">
+        <div class="d-flex align-items-center mb-2">
+            <div class="avatar" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 10px;">
+                {{ user.first_name|first|upper }}
+            </div>
+            <div>
+                <small class="d-block fw-bold">{{ user.get_full_name|default:user.username }}</small>
+                <small class="text-muted">{{ user.profile.get_role_display }}</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <div class="admin-menu flex-grow-1 py-3">
+        <!-- Dashboard -->
+        <div class="menu-section">
+            <h6 class="text-muted px-3 my-3 text-uppercase" style="font-size: 12px; letter-spacing: 1px;">
+                <i class="fas fa-home me-2"></i> Main
+            </h6>
+            <a href="{% url 'adminpanel:dashboard' %}" class="nav-link text-white px-3 py-2 d-flex align-items-center {% if request.resolver_match.url_name == 'dashboard' %}bg-primary bg-opacity-25 border-start border-primary border-5{% endif %}">
+                <i class="fas fa-chart-line me-2"></i> <span>Dashboard</span>
+            </a>
+        </div>
+
+        <!-- Management Section -->
+        <div class="menu-section">
+            <h6 class="text-muted px-3 my-3 text-uppercase" style="font-size: 12px; letter-spacing: 1px;">
+                <i class="fas fa-cogs me-2"></i> Management
+            </h6>
+            <a href="{% url 'adminpanel:staff_management' %}" class="nav-link text-white px-3 py-2 d-flex align-items-center {% if 'staff' in request.path %}bg-primary bg-opacity-25 border-start border-primary border-5{% endif %}">
+                <i class="fas fa-users me-2" style="color: #17a2b8;"></i> <span>Staff & Payroll</span>
+            </a>
+            <a href="{% url 'adminpanel:user_management' %}" class="nav-link text-white px-3 py-2 d-flex align-items-center {% if 'users-management' in request.path %}bg-primary bg-opacity-25 border-start border-primary border-5{% endif %}">
+                <i class="fas fa-user-shield me-2" style="color: #007bff;"></i> <span>Users & Roles</span>
+            </a>
+            <a href="{% url 'adminpanel:expense_management' %}" class="nav-link text-white px-3 py-2 d-flex align-items-center {% if 'expenses' in request.path %}bg-primary bg-opacity-25 border-start border-primary border-5{% endif %}">
+                <i class="fas fa-receipt me-2" style="color: #dc3545;"></i> <span>Expenses</span>
+            </a>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="menu-section">
+            <h6 class="text-muted px-3 my-3 text-uppercase" style="font-size: 12px; letter-spacing: 1px;">
+                <i class="fas fa-chart-bar me-2"></i> Analytics
+            </h6>
+            <a href="{% url 'adminpanel:reports_analytics' %}" class="nav-link text-white px-3 py-2 d-flex align-items-center {% if 'reports' in request.path %}bg-primary bg-opacity-25 border-start border-primary border-5{% endif %}">
+                <i class="fas fa-chart-bar me-2" style="color: #28a745;"></i> <span>Reports</span>
+            </a>
+        </div>
+
+        <!-- Security Section -->
+        <div class="menu-section">
+            <h6 class="text-muted px-3 my-3 text-uppercase" style="font-size: 12px; letter-spacing: 1px;">
+                <i class="fas fa-shield-alt me-2"></i> Security
+            </h6>
+            <a href="{% url 'adminpanel:audit_logs' %}" class="nav-link text-white px-3 py-2 d-flex align-items-center {% if 'audit' in request.path %}bg-primary bg-opacity-25 border-start border-primary border-5{% endif %}">
+                <i class="fas fa-shield-alt me-2" style="color: #6f42c1;"></i> <span>Audit Logs</span>
+            </a>
+        </div>
+
+        <!-- System Section -->
+        <div class="menu-section">
+            <h6 class="text-muted px-3 my-3 text-uppercase" style="font-size: 12px; letter-spacing: 1px;">
+                <i class="fas fa-sliders-h me-2"></i> System
+            </h6>
+            <a href="{% url 'dashboard' %}" class="nav-link text-white px-3 py-2 d-flex align-items-center">
+                <i class="fas fa-home me-2" style="color: #20c997;"></i> <span>Go to POS</span>
+            </a>
+            <a href="{% url 'accounts:profile' %}" class="nav-link text-white px-3 py-2 d-flex align-items-center">
+                <i class="fas fa-user-circle me-2" style="color: #ffc107;"></i> <span>My Profile</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="admin-footer border-top border-secondary p-3 mt-auto">
+        <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger btn-sm w-100">
+            <i class="fas fa-sign-out-alt me-1"></i> Logout
+        </a>
+    </div>
+</nav>
+
+<!-- Main Content Area Adjustment -->
+<style>
+    .admin-sidebar {
+        box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+        z-index: 1000;
+    }
+
+    .admin-sidebar .nav-link {
+        border-radius: 6px;
+        margin: 4px 10px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .admin-sidebar .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        transform: translateX(5px);
+    }
+
+    .admin-sidebar .nav-link i {
+        width: 20px;
+        text-align: center;
+    }
+
+    .admin-brand {
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .admin-user-info {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    }
+
+    .admin-menu {
+        background: rgba(0,0,0,0.1);
+        border-radius: 10px;
+        margin: 10px;
+    }
+
+    body {
+        margin-left: 250px;
+    }
+
+    @media (max-width: 768px) {
+        .admin-sidebar {
+            position: relative;
+            width: 100%;
+            min-height: auto;
+            margin-bottom: 20px;
+        }
+        body {
+            margin-left: 0;
+        }
+    }
+</style>

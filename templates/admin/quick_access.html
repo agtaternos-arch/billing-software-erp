@@ -1,0 +1,54 @@
+<!-- Admin Dashboard Quick Access -->
+{% load static %}
+
+<div class="admin-quick-access mb-4">
+    <h5 class="mb-3">Quick Access</h5>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <a href="{% url 'adminpanel:staff_add' %}" class="quick-access-card card border-0 shadow-sm text-decoration-none h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-plus fa-3x mb-3" style="color: #17a2b8;"></i>
+                    <h6>Add Staff Member</h6>
+                    <small class="text-muted">Create new employee account</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="{% url 'adminpanel:user_add' %}" class="quick-access-card card border-0 shadow-sm text-decoration-none h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-shield fa-3x mb-3" style="color: #007bff;"></i>
+                    <h6>Add User Account</h6>
+                    <small class="text-muted">Create billing panel user</small>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="{% url 'billing:expense_create' %}" class="quick-access-card card border-0 shadow-sm text-decoration-none h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-plus-circle fa-3x mb-3" style="color: #dc3545;"></i>
+                    <h6>Record Expense</h6>
+                    <small class="text-muted">Add new business expense</small>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.quick-access-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.quick-access-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+    background-color: #f8f9fa;
+}
+
+.quick-access-card h6 {
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 8px;
+}
+</style>

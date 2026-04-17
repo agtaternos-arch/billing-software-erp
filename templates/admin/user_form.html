@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit User{% else %}Add User{% endif %} | Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container admin-form-container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-0">
+                <i class="fas fa-user-plus me-2" style="color: #007bff;"></i> 
+                {% if is_edit %}Edit User Account{% else %}Create New User Account{% endif %}
+            </h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'adminpanel:user_management' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i> {{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="form-section">
+        {% csrf_token %}
+        
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0">Account Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Username *</label>
+                        <input type="text" class="form-control" name="username" required placeholder="e.g., john_smith">
+                        <small class="text-muted">Used for login to billing panel</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Email *</label>
+                        <input type="email" class="form-control" name="email" required placeholder="user@company.com">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Password *</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Role *</label>
+                        <select class="form-control" name="role" required>
+                            <option value="owner">Business Owner - Full Access</option>
+                            <option value="manager">Manager - Admin Functions</option>
+                            <option value="cashier">Cashier - Billing Only</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0">Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">First Name</label>
+                        <input type="text" class="form-control" name="first_name" placeholder="John">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Last Name</label>
+                        <input type="text" class="form-control" name="last_name" placeholder="Smith">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i> 
+            <strong>User Type:</strong>
+            <ul class="mb-0 mt-2">
+                <li><strong>Owner:</strong> Full system access, staff management, reports, settings</li>
+                <li><strong>Manager:</strong> Admin features, but limited staff access</li>
+                <li><strong>Cashier:</strong> Billing panel access only (create invoices, payments)</li>
+            </ul>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-save me-2"></i> Create User Account
+            </button>
+            <a href="{% url 'adminpanel:user_management' %}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-times me-2"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+.admin-form-container {
+    background-color: #f8f9fa;
+    padding: 30px;
+    border-radius: 8px;
+}
+
+.form-section {
+    margin-top: 20px;
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.12) !important;
+}
+
+.form-label {
+    color: #212529;
+    margin-bottom: 6px;
+}
+
+.form-control {
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    padding: 10px 12px;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+</style>
+{% endblock %}

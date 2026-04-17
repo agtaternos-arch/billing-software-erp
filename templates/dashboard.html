@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard | Torvix ERP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        padding: 2rem 3rem;
+    }
+    
+    .metric-card {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 24px;
+        padding: 1.75rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .metric-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(6, 182, 212, 0.3);
+        background: rgba(15, 23, 42, 0.6);
+    }
+    .metric-card::after {
+        content: ''; position: absolute; top: 0; right: 0; width: 100px; height: 100px;
+        background: radial-gradient(circle at top right, rgba(255,255,255,0.03), transparent 70%);
+    }
+    
+    .metric-title {
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 900;
+        font-family: 'Inter', sans-serif;
+        color: white;
+        line-height: 1;
+        letter-spacing: -1px;
+    }
+    
+    .health-score-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 1.25rem;
+        border: 3px solid;
+    }
+    
+    .score-excellent { color: #10b981; border-color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+    .score-good { color: #3b82f6; border-color: #3b82f6; }
+    .score-warning { color: #f59e0b; border-color: #f59e0b; }
+    .score-danger { color: #ef4444; border-color: #ef4444; }
+    
+    .ai-alert {
+        background: rgba(239, 68, 68, 0.1);
+        border-left: 4px solid #ef4444;
+        padding: 1rem;
+        border-radius: 0 8px 8px 0;
+        margin-top: 1rem;
+    }
+    
+    .ai-suggestion {
+        background: rgba(139, 92, 246, 0.1);
+        border-left: 4px solid #8b5cf6;
+        padding: 1rem;
+        border-radius: 0 8px 8px 0;
+        margin-top: 1rem;
+    }
+    
+    .dashboard-nav {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .dashboard-nav .btn {
+        font-weight: 700;
+        font-size: 0.85rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="brand-font mb-0 text-glow-cyan">MAIN <span class="text-white">PANEL</span></h2>
+            <p class="text-secondary mb-0">AI-Driven Insights & Analytics | {{ today|date:"l, F j, Y" }}</p>
+        </div>
+        <div class="dashboard-nav">
+            <a href="{% url 'billing:expense_list' %}" class="btn btn-outline-warning brand-font"><i class="fas fa-receipt me-2"></i> EXPENSES</a>
+            <a href="{% url 'billing:report_gst' %}" class="btn btn-outline-info brand-font"><i class="fas fa-file-invoice-dollar me-2"></i> GST REPORT</a>
+            <a href="{% url 'billing:report_profit_loss' %}" class="btn btn-outline-success brand-font"><i class="fas fa-chart-line me-2"></i> PROFIT/LOSS</a>
+            <a href="{% url 'billing:pos_terminal' %}" class="btn btn-primary brand-font"><i class="fas fa-cash-register me-2"></i> POS TERMINAL</a>
+        </div>
+    </div>
+
+    <!-- AI Alerts Section -->
+    <div class="row mb-4 g-3">
+        {% if sales_drop_alert %}
+        <div class="col-md-6">
+            <div class="ai-alert d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle text-danger fs-3 me-3"></i>
+                <div>
+                    <h6 class="fw-bold mb-1 text-danger">AI Alert: Sales Decline</h6>
+                    <p class="small text-secondary mb-0">{{ sales_drop_alert }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if restock_suggestion %}
+        <div class="col-md-6">
+            <div class="ai-suggestion d-flex align-items-center">
+                <i class="fas fa-robot text-purple fs-3 me-3" style="color: #8b5cf6;"></i>
+                <div>
+                    <h6 class="fw-bold mb-1" style="color: #8b5cf6;">AI Suggestion: Inventory Action Required</h6>
+                    <p class="small text-secondary mb-0">{{ restock_suggestion }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Business Health Score -->
+        <div class="col-md-3">
+            <div class="metric-card d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-title">Health Score</div>
+                    <div class="text-secondary small">System holistic rating</div>
+                </div>
+                <div class="health-score-circle 
+                    {% if health_score >= 90 %}score-excellent{% elif health_score >= 70 %}score-good{% elif health_score >= 50 %}score-warning{% else %}score-danger{% endif %}">
+                    {{ health_score }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Today's Revenue -->
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-title">Live Revenue (Today)</div>
+                <div class="metric-value glow-cyan">₹{{ revenue_today|floatformat:2 }}</div>
+                <div class="text-success small mt-2"><i class="fas fa-arrow-up"></i> Collected via POS / Invoices</div>
+            </div>
+        </div>
+
+        <!-- Today's Profit -->
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-title">Estimated Profit (Today)</div>
+                <div class="metric-value {% if profit_today >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    ₹{{ profit_today|floatformat:2 }}
+                </div>
+                <div class="small mt-2 text-secondary">Revenue - Cost of Goods Sold</div>
+            </div>
+        </div>
+
+        <!-- Total Revenue -->
+        <div class="col-md-3">
+            <div class="metric-card border-primary">
+                <div class="metric-title">Gross Revenue (All Time)</div>
+                <div class="metric-value text-primary">₹{{ total_revenue|floatformat:2 }}</div>
+                <div class="small mt-2 text-secondary"><i class="fas fa-gem text-primary"></i> Lifetime Performance</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Sales Trend Graph -->
+        <div class="col-md-8">
+            <div class="metric-card h-100">
+                <h6 class="brand-font mb-4">7-DAY REVENUE VELOCITY</h6>
+                <canvas id="salesChart" height="100"></canvas>
+            </div>
+        </div>
+        
+        <!-- Deep Analytics -->
+        <div class="col-md-4">
+            <div class="metric-card h-100 d-flex flex-column gap-3">
+                <h6 class="brand-font mb-2">OPERATIONAL METRICS</h6>
+                
+                <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                    <div style="width: 100%;">
+                        <div class="text-secondary small fw-bold mb-2">ITEMS SOLD</div>
+                        <div class="d-flex justify-content-between">
+                            <div class="text-center">
+                                <div class="text-white-50" style="font-size:0.65rem;">TODAY</div>
+                                <div class="fw-bold text-info">{{ products_sold_today|default:"0" }}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-white-50" style="font-size:0.65rem;">THIS MONTH</div>
+                                <div class="fw-bold text-warning">{{ products_sold_month|default:"0" }}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-white-50" style="font-size:0.65rem;">ALL TIME</div>
+                                <div class="fw-bold text-white">{{ products_sold }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background: rgba(239,68,68,0.1);">
+                    <div>
+                        <div class="text-secondary small fw-bold">Low Stock Alerts</div>
+                        <h4 class="mb-0 text-danger">{{ low_stock_count }}</h4>
+                    </div>
+                    <i class="fas fa-exclamation-circle fs-2 text-danger opacity-50"></i>
+                </div>
+                
+                <!-- Sales Leaders Ranking -->
+                <div class="p-3 rounded flex-grow-1" style="background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2);">
+                    <div class="text-secondary small fw-bold mb-3 text-uppercase d-flex justify-content-between align-items-center" style="letter-spacing:1px;">
+                        <span>Sales Leaders</span>
+                        <i class="fas fa-crown text-warning"></i>
+                    </div>
+                    {% for p in top_5_products %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="small fw-bold text-white d-flex align-items-center justify-content-center" style="width:20px; height:20px; background: rgba(139,92,246,0.3); border-radius: 4px;">{{ forloop.counter }}</div>
+                            <div class="small fw-bold text-white">{{ p.name|truncatechars:18 }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold" style="color: #a78bfa; font-size: 0.8rem;">{{ p.qty }} units</div>
+                            <div class="text-white-50" style="font-size: 0.65rem;">₹{{ p.revenue|floatformat:0 }}</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-secondary small">Insufficient data for ranking.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        
+        // Gradient for line chart
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(6, 182, 212, 0.5)');
+        gradient.addColorStop(1, 'rgba(6, 182, 212, 0.05)');
+
+        const data = {
+            labels: {{ sales_labels|safe }},
+            datasets: [{
+                label: 'Gross Sales (₹)',
+                data: {{ sales_data|safe }},
+                borderColor: '#06b6d4',
+                backgroundColor: gradient,
+                borderWidth: 4,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#06b6d4',
+                pointBorderWidth: 3,
+                pointRadius: 0,
+                pointHoverRadius: 8,
+                pointHoverBackgroundColor: '#06b6d4',
+                pointHoverBorderColor: '#ffffff',
+                pointHoverBorderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        };
+
+        new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#06b6d4',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return '₹' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                        ticks: { color: '#94a3b8', font: { family: 'Outfit' } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                        ticks: {
+                            color: '#94a3b8',
+                            font: { family: 'Outfit' },
+                            callback: function(value) { return '₹' + value; }
+                        },
+                        beginAtZero: true
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+            }
+        });
+    });
+</script>
+{% endblock %}

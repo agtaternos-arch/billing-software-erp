@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}System Settings | Torvix ERP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        padding: 2rem;
+        max-width: 1000px;
+        margin: 0 auto;
+        font-family: 'Rajdhani', sans-serif;
+    }
+    .brand-font { font-family: 'Orbitron', sans-serif; }
+    
+    .glass-panel {
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        color: #fff;
+    }
+
+    body { background-color: #0f172a; color: #f8fafc; }
+    
+    .settings-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-label { color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
+    
+    .form-control, .form-select {
+        background: rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #fff !important;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+    }
+
+    .form-control:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.1);
+    }
+
+    .btn-save {
+        background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+        border: none;
+        color: white;
+        padding: 1rem 2.5rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-family: 'Orbitron', sans-serif;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="brand-font mb-0" style="color: #06b6d4;">SYSTEM <span class="text-white">SETTINGS</span></h2>
+            <p class="text-secondary mb-0">Configure business rules and regional preferences</p>
+        </div>
+        <div>
+            <a href="{% url 'accounts:admin_dashboard' %}" class="btn btn-outline-secondary border-secondary text-white fw-bold">
+                <i class="fas fa-arrow-left me-2"></i> COMMAND CENTER
+            </a>
+        </div>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="glass-panel p-5">
+            <div class="settings-card">
+                <h5 class="brand-font mb-4 text-info"><i class="fas fa-building me-2"></i> BUSINESS IDENTITY</h5>
+                <div class="row g-4">
+                    <div class="col-md-12">
+                        <label class="form-label">Business Display Name</label>
+                        <input type="text" name="business_name" class="form-control" value="{{ business_name }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <h5 class="brand-font mb-4 text-warning"><i class="fas fa-globe me-2"></i> REGIONAL SETTINGS</h5>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Currency Symbol</label>
+                        <input type="text" name="currency" class="form-control" value="{{ currency }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Default Tax Rate (%)</label>
+                        <input type="number" name="tax_rate" class="form-control" value="{{ tax_rate }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <h5 class="brand-font mb-4 text-success"><i class="fas fa-print me-2"></i> PRINTING PREFERENCES</h5>
+                <div class="row g-4">
+                    <div class="col-md-12">
+                        <label class="form-label">Default Receipt Size</label>
+                        <select class="form-select">
+                            <option>Thermal 80mm (Standard)</option>
+                            <option>Thermal 58mm (Small)</option>
+                            <option>A4 Standard</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-5">
+                <button type="submit" class="btn btn-save">
+                    <i class="fas fa-check-circle me-2"></i> SAVE CONFIGURATION
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Record Payment - Invoice #{{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Record Payment</h2>
+    <p class="text-muted">Invoice #{{ invoice.invoice_number }}</p>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Invoice Summary</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Customer:</strong> {{ invoice.customer.name }}</p>
+                    <p><strong>Invoice Date:</strong> {{ invoice.invoice_date|date:"M d, Y" }}</p>
+                    <p><strong>Due Date:</strong> {{ invoice.due_date|date:"M d, Y" }}</p>
+                    <hr>
+                    <p><strong>Total Amount:</strong> <span class="h5">${{ invoice.total_amount|floatformat:2 }}</span></p>
+                    <p><strong>Paid Amount:</strong> <span class="h5 text-success">${{ invoice.paid_amount|floatformat:2 }}</span></p>
+                    <p><strong>Balance Due:</strong> <span class="h5 text-danger">${{ invoice.remaining_balance|floatformat:2 }}</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Record Payment</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="id_amount" class="form-label">Payment Amount *</label>
+                            {{ form.amount }}
+                            <small class="form-text text-muted">
+                                Balance due: ${{ invoice.remaining_balance|floatformat:2 }}
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_payment_method" class="form-label">Payment Method *</label>
+                            {{ form.payment_method }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_payment_date" class="form-label">Payment Date *</label>
+                            {{ form.payment_date }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_reference" class="form-label">Payment Reference</label>
+                            {{ form.reference }}
+                            <small class="form-text text-muted">
+                                Check #, Transaction ID, or Reference code
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_notes" class="form-label">Notes</label>
+                            {{ form.notes }}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">Record Payment</button>
+                            <a href="{% url 'billing:invoice_detail' invoice.id %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border-radius: 0.25rem;
+    }
+    .form-label {
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

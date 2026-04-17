@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Staff | Torvix ERP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        font-family: 'Rajdhani', sans-serif;
+    }
+    .brand-font { font-family: 'Orbitron', sans-serif; }
+    
+    .glass-panel {
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        color: #fff;
+    }
+
+    body { background-color: #0f172a; color: #f8fafc; }
+    
+    .staff-table { color: #f8fafc; margin-top: 1rem; }
+    .staff-table thead th {
+        background: rgba(255, 255, 255, 0.05);
+        color: #94a3b8;
+        border: none; padding: 1rem; text-transform: uppercase;
+    }
+    .staff-table tbody td {
+        padding: 1rem; border-color: rgba(255, 255, 255, 0.05); vertical-align: middle;
+    }
+    .status-pill {
+        padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+    }
+    .btn-neon {
+        background: #3b82f6; color: #ffffff;
+        border: 1px solid #93c5fd; padding: 8px 18px;
+        font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 800;
+        border-radius: 8px; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); text-decoration: none; display: inline-block;
+    }
+    .btn-neon:hover { color: white; background: #60a5fa; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="brand-font mb-0" style="color: #06b6d4;">STAFF <span class="text-white">MANAGEMENT</span></h2>
+            <p class="text-secondary mb-0">View and manage employee access roles</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'billing:pos_terminal' %}" class="btn btn-outline-secondary border-secondary text-white fw-bold"><i class="fas fa-arrow-left me-2"></i> BACK TO POS</a>
+            <a href="{% url 'accounts:admin_dashboard' %}" class="btn btn-neon"><i class="fas fa-shield-alt me-2"></i> COMMAND CENTER</a>
+        </div>
+    </div>
+
+    <div class="glass-panel p-4 mb-4">
+        <h5 class="brand-font mb-4">NETWORK DIRECTORY</h5>
+        <div class="table-responsive">
+            <table class="table staff-table">
+                <thead>
+                    <tr>
+                        <th>STAFF MEMBER</th>
+                        <th>USERNAME</th>
+                        <th>SYS ROLE</th>
+                        <th>BASE WAGE / MONTH</th>
+                        <th>SHIFT PERIOD</th>
+                        <th>STATUS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm me-3 bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-user small text-white"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ u.get_full_name|default:u.username }}</div>
+                                    <div class="small text-secondary">{{ u.email|default:"No email" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ u.username }}</td>
+                        <td>
+                            {% if u.profile.role == 'owner' %}
+                            <span class="status-pill text-white" style="background:#8b5cf6;">OWNER</span>
+                            {% elif u.profile.role == 'manager' %}
+                            <span class="status-pill text-white" style="background:#eab308;">MANAGER</span>
+                            {% else %}
+                            <span class="status-pill bg-primary bg-opacity-25 text-primary">CASHIER</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-info fw-bold">₹{{ u.profile.base_wage|default:"0.00" }}</td>
+                        <td class="small text-secondary fw-bold">{{ u.profile.shift_start|default:"09:00" }} - {{ u.profile.shift_end|default:"17:00" }}</td>
+                        <td>
+                            {% if u.is_active %}
+                            <span class="status-pill bg-success bg-opacity-25 text-success">Active</span>
+                            {% else %}
+                            <span class="status-pill bg-danger bg-opacity-25 text-danger">Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info btn-edit-staff"
+                                data-id="{{ u.id }}"
+                                data-fname="{{ u.first_name|escapejs }}"
+                                data-lname="{{ u.last_name|escapejs }}"
+                                data-wage="{{ u.profile.base_wage }}"
+                                data-start="{{ u.profile.shift_start|time:'H:i' }}"
+                                data-end="{{ u.profile.shift_end|time:'H:i' }}"
+                                data-dob="{{ u.profile.date_of_birth|date:'Y-m-d' }}">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">No staff records found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Staff Modal -->
+<div class="modal fade" id="editStaffModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background: #1e293b; color: white;">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title brand-font">EDIT STAFF RECORD</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'accounts:user_list' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="user_id" id="edit_user_id">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label text-secondary small">FIRST NAME</label>
+                            <input type="text" name="first_name" id="edit_first_name" class="form-control bg-dark text-white border-secondary">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-secondary small">LAST NAME</label>
+                            <input type="text" name="last_name" id="edit_last_name" class="form-control bg-dark text-white border-secondary">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-secondary small">BASE WAGE (₹)</label>
+                            <input type="number" step="0.01" name="wage" id="edit_wage" class="form-control bg-dark text-white border-secondary">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-secondary small">DATE OF BIRTH (AGE)</label>
+                            <input type="date" name="date_of_birth" id="edit_dob" class="form-control bg-dark text-white border-secondary">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-secondary small">SHIFT START</label>
+                            <input type="time" name="shift_start" id="edit_shift_start" class="form-control bg-dark text-white border-secondary">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-secondary small">SHIFT END</label>
+                            <input type="time" name="shift_end" id="edit_shift_end" class="form-control bg-dark text-white border-secondary">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary brand-font">SAVE CHANGES</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.btn-edit-staff').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.getElementById('edit_user_id').value = this.dataset.id;
+                document.getElementById('edit_first_name').value = this.dataset.fname || '';
+                document.getElementById('edit_last_name').value = this.dataset.lname || '';
+                document.getElementById('edit_wage').value = this.dataset.wage || '';
+                document.getElementById('edit_shift_start').value = this.dataset.start || '';
+                document.getElementById('edit_shift_end').value = this.dataset.end || '';
+                document.getElementById('edit_dob').value = this.dataset.dob || '';
+                new bootstrap.Modal(document.getElementById('editStaffModal')).show();
+            });
+        });
+    });
+</script>
+{% endblock %}

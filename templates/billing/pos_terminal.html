@@ -1,0 +1,1091 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Torvix POS Terminal | Professional{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --pos-bg: #f8fafc;
+        --sidebar-w: 260px;
+        --navy-dark: #0f172a;
+        --blue-primary: #2563eb;
+        --green-success: #10b981;
+        --red-danger: #ef4444;
+        --text-dark: #1e293b;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
+        --glass-bg: rgba(255, 255, 255, 0.8);
+    }
+
+    body {
+        margin: 0;
+        background-color: var(--pos-bg);
+        font-family: 'Inter', sans-serif;
+        height: 100vh;
+        overflow: hidden;
+        color: var(--text-dark);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Strip */
+    .top-header {
+        height: 50px;
+        background: white;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 1rem 0 256px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        z-index: 50;
+        position: relative;
+    }
+
+    /* Left Sidebar */
+    .sidenav {
+        width: var(--sidebar-w);
+        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        color: rgba(255,255,255,0.7);
+    }
+
+    .brand {
+        padding: 2rem 1.5rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .brand h3 { margin: 0; color: white; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.5rem;}
+    .brand h3 i { color: #38bdf8; filter: drop-shadow(0 0 8px rgba(56,189,248,0.4)); }
+    .brand p { margin: 6px 0 0 0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.4); font-weight: 700; }
+
+    .nav-section {
+        padding: 1.5rem;
+    }
+    .nav-label {
+        font-size: 0.6rem;
+        font-weight: 800;
+        color: rgba(255,255,255,0.3);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 1rem;
+    }
+    .nav-item {
+        display: flex;
+        align-items: center;
+        padding: 0.85rem 1.25rem;
+        color: rgba(255,255,255,0.6);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border-radius: 10px;
+        margin-bottom: 6px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        gap: 12px;
+    }
+    .nav-item i { font-size: 1.1rem; transition: all 0.3s; }
+    .nav-item:hover { 
+        background: rgba(255,255,255,0.05); 
+        color: white;
+        transform: translateX(4px);
+    }
+    .nav-item.active {
+        color: white;
+        background: linear-gradient(90deg, rgba(56,189,248,0.15) 0%, rgba(56,189,248,0.05) 100%);
+        box-shadow: inset 3px 0 0 #38bdf8;
+    }
+    .nav-item.active i { color: #38bdf8; filter: drop-shadow(0 0 5px rgba(56,189,248,0.5)); }
+
+    /* Main Container */
+    .main-container {
+        margin-left: var(--sidebar-w);
+        height: calc(100vh - 50px);
+        display: flex;
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    /* Tabs Column */
+    .tabs-column {
+        width: 60px;
+        background: var(--navy-dark);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem 0;
+        gap: 1rem;
+    }
+
+    .tab-btn {
+        width: 40px; height: 40px;
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-weight: bold; font-size: 0.9rem;
+        cursor: pointer; border: none; background: transparent;
+    }
+    .tab-btn.active {
+        background: var(--blue-primary);
+    }
+    .tab-add {
+        border-radius: 50%;
+        border: 1px dashed rgba(255,255,255,0.3);
+        color: rgba(255,255,255,0.5);
+    }
+
+    /* Cart Workspace */
+    .cart-workspace {
+        flex-grow: 1;
+        background: white;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+
+    .cart-topbar {
+        padding: 0.75rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        background: #fafafa;
+    }
+
+    .input-box {
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 0.9rem;
+        outline: none;
+    }
+    
+    .search-wrap {
+        flex-grow: 1;
+        position: relative;
+    }
+    .search-input { width: 100%; padding-left: 2.5rem; }
+    .search-wrap i {
+        position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);
+    }
+
+    /* Fuse search results overlay */
+    .search-results {
+        position: absolute; top: 100%; left: 0; right: 0;
+        background: white; border: 1px solid var(--border-color);
+        border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        z-index: 100; max-height: 250px; overflow-y: auto; display: none;
+    }
+    .search-item {
+        padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between;
+    }
+    .search-item:hover { background: #f8fafc; }
+
+    .toggle-group {
+        display: flex;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .toggle-btn {
+        padding: 0.75rem 1.5rem;
+        border: none; background: transparent; color: var(--text-muted);
+        font-weight: 600; cursor: pointer;
+    }
+    .toggle-btn.active {
+        background: var(--blue-primary); color: white;
+    }
+
+    .table-responsive {
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+        background: var(--navy-dark); color: var(--blue-primary);
+        font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
+        padding: 0.75rem 1rem; text-align: left; font-weight: 700;
+        position: sticky; top: 0; z-index: 10;
+    }
+    td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+
+    .empty-state {
+        height: 100%; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        color: var(--text-muted);
+        background: radial-gradient(circle at center, #ffffff 0%, #f8fafc 100%);
+        padding: 3rem;
+        text-align: center;
+    }
+    .empty-state .scan-orb {
+        width: 120px; height: 120px;
+        background: white; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        position: relative;
+    }
+    .empty-state .scan-orb::after {
+        content: ''; position: absolute; inset: -10px;
+        border: 2px solid var(--blue-primary); border-radius: 50%;
+        animation: orbPulse 2s infinite;
+    }
+    .empty-state .scan-orb i { font-size: 3.5rem; color: var(--blue-primary); animation: beat 2s infinite; }
+    
+    @keyframes orbPulse {
+        0% { transform: scale(0.9); opacity: 1; }
+        100% { transform: scale(1.3); opacity: 0; }
+    }
+    @keyframes beat {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    .quick-shelf {
+        background: #f8fafc;
+        border-top: 1px solid var(--border-color);
+        padding: 0.75rem 1rem;
+        display: flex; gap: 0.75rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .quick-shelf::-webkit-scrollbar { display: none; }
+    .q-item {
+        flex: 0 0 auto;
+        background: white; border: 1px solid var(--border-color);
+        padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;
+        display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 700;
+        transition: all 0.2s;
+    }
+    .q-item:hover { border-color: var(--blue-primary); transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .q-item i { color: var(--blue-primary); font-size: 0.7rem; }
+    .q-item .q-p { color: var(--text-muted); font-weight: 500; }
+
+    .cart-summary {
+        background: white;
+        border-top: 2px solid var(--navy-dark);
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .sum-block { display: flex; flex-direction: column; align-items: flex-start; }
+    .sum-label { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .sum-val { font-size: 1.3rem; font-weight: 800; color: var(--text-dark); font-family: 'JetBrains Mono', monospace; }
+    .sum-val-blue { 
+        color: var(--blue-primary); 
+        font-size: 2.75rem; 
+        line-height: 1;
+        text-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    }
+
+    /* Right Action Panel */
+    .action-panel {
+        width: 320px;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .btn-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .action-btn {
+        background: white; border: 1px solid var(--border-color);
+        border-radius: 12px; padding: 1.25rem 0;
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; gap: 8px; font-weight: 700; font-size: 0.85rem;
+        color: var(--text-dark); cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .action-btn i { font-size: 1.5rem; color: var(--blue-primary); }
+    .action-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+    .profile-card {
+        background: white; border: 1px solid var(--border-color);
+        border-radius: 12px; padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .profile-header {
+        display: flex; align-items: center; gap: 12px;
+        margin-bottom: 1rem; font-weight: 700;
+    }
+    .profile-icon {
+        width: 36px; height: 36px; background: var(--blue-primary); color: white;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    }
+    .profile-info {
+        display: flex; justify-content: space-between; font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+    .gold-badge { background: #fbbf24; color: white; padding: 2px 8px; border-radius: 12px; font-weight: 700; font-size: 0.75rem; }
+    
+    .payment-row {
+        display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: auto;
+    }
+    .payment-row .pay-btn {
+        flex: 1 1 calc(33.333% - 0.75rem);
+        min-width: 90px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .pay-btn {
+        flex: 1; border: none; color: white; font-weight: 800; font-size: 0.75rem;
+        padding: 0.6rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
+        cursor: pointer; position: relative; overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    .pay-btn i { font-size: 1rem; }
+    .pay-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+    .pay-btn:active { transform: scale(0.98); }
+    .pay-btn span {
+        background: rgba(255,255,255,0.2); padding: 1px 5px; border-radius: 3px; font-size: 0.6rem;
+        margin-left: auto;
+    }
+    
+    .btn-main { 
+        background: var(--green-success) !important; 
+        padding: 1rem !important; 
+        grid-column: span 2; 
+        font-size: 0.9rem !important;
+        justify-content: center;
+    }
+    .btn-main i { font-size: 1.25rem !important; }
+
+    .print-strip {
+        display: flex; gap: 0.5rem; margin-top: 0.5rem;
+    }
+    .btn-print {
+        flex: 1; background: #f1f5f9; border: 1px solid var(--border-color);
+        padding: 0.5rem; border-radius: 8px; font-size: 0.7rem; font-weight: 700;
+        color: var(--text-dark); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    .btn-print:hover { background: #e2e8f0; }
+
+    .pulse {
+        animation: pulse-green 2s infinite;
+    }
+    @keyframes pulse-green {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Theme Switch */
+    body.dark-mode {
+        --pos-bg: #0f172a;
+        --text-dark: #f8fafc;
+        --border-color: #334155;
+        --glass-bg: rgba(15, 23, 42, 0.8);
+        background-color: var(--pos-bg);
+    }
+    body.dark-mode .top-header, body.dark-mode .cart-workspace, 
+    body.dark-mode .action-btn, body.dark-mode .profile-card, 
+    body.dark-mode .cart-summary, body.dark-mode .quick-shelf { background: #1e293b; border-color: #334155; color: #f8fafc; }
+    body.dark-mode .top-header.bg-white { background: #1e293b !important; }
+    body.dark-mode .input-box { background: #0f172a; color: #f8fafc; border-color: #334155; }
+    body.dark-mode .search-results { background: #1e293b; border-color: #334155; }
+    body.dark-mode .search-item { border-color: #334155; }
+    body.dark-mode .search-item:hover { background: #334155; }
+    body.dark-mode .search-item .text-muted { color: #94a3b8 !important; }
+    body.dark-mode .q-item { background: #0f172a; border-color: #334155; color: #f8fafc; }
+    body.dark-mode th { background: #0f172a; border-color: #334155; }
+    body.dark-mode td { border-color: #334155; }
+    body.dark-mode .btn-print { background: #334155; color: #f8fafc; border-color: #475569; }
+    body.dark-mode .btn-print:hover { background: #475569; }
+    body.dark-mode .modal-box { background: #1e293b; color: #f8fafc; }
+    body.dark-mode .sum-val-blue { text-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); }
+    body.dark-mode .empty-state { background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); }
+    body.dark-mode .empty-state .scan-orb { background: #1e293b; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+    body.dark-mode .cart-topbar { background: #1e293b; }
+</style>
+<style>
+    /* Modal */
+    #splitPaymentModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-box { background: white; width: 400px; border-radius: 12px; padding: 1.5rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+
+    /* Toast Notifications */
+    .torvix-notif {
+        position: fixed; top: 20px; right: 20px; z-index: 9999;
+        padding: 14px 24px; border-radius: 10px; font-weight: 700; font-size: 0.9rem;
+        color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        animation: slideInNotif 0.4s ease-out;
+        transition: opacity 0.4s;
+    }
+    .torvix-notif.error { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+    .torvix-notif.info { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .torvix-notif.success { background: linear-gradient(135deg, #10b981, #059669); }
+    @keyframes slideInNotif { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Top Bar -->
+<div class="top-header">
+    <div class="d-flex gap-2">
+        <span class="badge border border-primary text-primary bg-transparent px-3 py-1 rounded-pill">SYSTEM ONLINE</span>
+        <span class="badge border border-purple text-purple bg-transparent px-3 py-1 rounded-pill" style="color: #8b5cf6; border-color: #8b5cf6 !important;">BUSINESS OWNER</span>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="btn btn-sm btn-light border" style="border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-moon text-dark" id="themeIcon"></i>
+        </button>
+        <i class="fas fa-bell text-danger"></i>
+        <div class="btn btn-sm btn-light fw-bold text-primary border"><i class="fas fa-user-circle"></i> ADMIN <i class="fas fa-chevron-down ms-1 text-muted"></i></div>
+    </div>
+</div>
+
+<!-- Left Sidebar -->
+<div class="sidenav">
+    <div class="brand">
+        <h3 style="font-size: 1.25rem;"><i class="fas fa-rocket"></i> Ar Torvix Bills</h3>
+        <p>Pro Terminal v2.0</p>
+    </div>
+    <div class="nav-section pb-0">
+        <div class="nav-label">OPERATIONS</div>
+        <a href="{% url 'dashboard' %}" class="nav-item">
+            <i class="fas fa-chart-pie"></i> Dashboard
+        </a>
+        <a href="{% url 'billing:pos_terminal' %}" class="nav-item active">
+            <i class="fas fa-bolt"></i> Quick Bill
+        </a>
+    </div>
+    <div class="nav-section pb-0">
+        <div class="nav-label">DATABASE</div>
+        <a href="{% url 'billing:invoice_list' %}" class="nav-item">
+            <i class="fas fa-history"></i> History
+        </a>
+        <a href="{% url 'inventory:product_list' %}" class="nav-item">
+            <i class="fas fa-box-open"></i> Inventory
+        </a>
+        <a href="{% url 'customers:customer_list' %}" class="nav-item">
+            <i class="fas fa-user-friends"></i> Clients
+        </a>
+    </div>
+    <div class="nav-section mt-auto border-top border-white border-opacity-5">
+        <a href="{% url 'accounts:admin_dashboard' %}" class="nav-item">
+            <i class="fas fa-user-shield"></i> Admin Panel
+        </a>
+        <div class="px-3 py-2 text-center">
+            <div class="badge bg-success bg-opacity-25 text-success small w-100 py-2">NODE: OK-200</div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Area -->
+<div class="main-container">
+    
+    <!-- Tab Strip -->
+    <div class="tabs-column" id="tabsColumn">
+        <button class="tab-btn active" onclick="switchTab('T1')">T1</button>
+        <button class="tab-btn tab-add" onclick="addTab()"><i class="fas fa-plus"></i></button>
+    </div>
+
+    <!-- Workspace -->
+    <div class="cart-workspace">
+        <div class="cart-topbar">
+            <div class="search-wrap">
+                <i class="fas fa-barcode"></i>
+                <input type="text" id="barcodeSearch" class="input-box search-input" placeholder="Scan Barcode or Search (F2)" autocomplete="off">
+                <div id="searchResults" class="search-results"></div>
+            </div>
+            
+            <select id="customerSelect" class="input-box" style="width: 200px;">
+                <option value="walkin">Walk-in Customer (Default)</option>
+                {% for c in customers %}
+                <option value="{{ c.id }}" data-points="{{ c.loyalty_points|default:0 }}" data-due="{{ c.due_amount|default:0 }}" data-name="{{ c.name }}">{{ c.name }} ({{ c.phone }})</option>
+                {% endfor %}
+            </select>
+
+            <button class="btn btn-primary fw-bold" style="padding: 0.75rem 1.5rem; border-radius: 6px;" onclick="setCustomerType('walkin')">Walk-in</button>
+        </div>
+
+        <div class="table-responsive">
+            <table id="cartTable">
+                <thead>
+                    <tr>
+                        <th>PRODUCT</th>
+                        <th>PRICE</th>
+                        <th>QTY</th>
+                        <th>DISC %</th>
+                        <th>TOTAL</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="cartBody">
+                    <!-- Items inject here -->
+                </tbody>
+            </table>
+            
+            <div id="emptyState" class="empty-state">
+                <div class="scan-orb">
+                    <i class="fas fa-barcode"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-1">TERMINAL STANDBY</h4>
+                <p class="text-muted small mb-0 font-monospace">Waiting for barcode scan or manual entry...</p>
+                <div class="mt-4 text-muted small"><i class="fas fa-info-circle me-1"></i> Hint: Press <b>F2</b> to focus search</div>
+            </div>
+        </div>
+
+        <div class="quick-shelf">
+            <div class="text-muted small fw-bold d-flex align-items-center me-2 text-uppercase" style="letter-spacing:1px; writing-mode: vertical-lr; transform: rotate(180deg);">Quick Picks</div>
+            {% for p in popular_products %}
+            <div class="q-item" onclick="selectSearchItem({{ p.id }})">
+                <i class="fas fa-star"></i>
+                <span>{{ p.name }}</span>
+                <span class="q-p">₹{{ p.unit_price }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="cart-summary">
+            <div class="sum-block">
+                <div class="sum-label">COUNT</div>
+                <div class="sum-val" id="sumCount">0</div>
+            </div>
+            <div class="sum-block">
+                <div class="sum-label">SUBTOTAL</div>
+                <div class="sum-val" id="sumSubtotal">₹0.00</div>
+            </div>
+            <div class="sum-block">
+                <div class="sum-label">TAX (GST 18%)</div>
+                <div class="sum-val" id="sumTax">₹0.00</div>
+            </div>
+            <div class="sum-block">
+                <div class="sum-label text-danger">TOTAL DISC</div>
+                <div class="sum-val text-danger" id="sumDisc">-₹0.00</div>
+            </div>
+            <div class="sum-block">
+                <div class="sum-label text-dark">ADJ DISCOUNT</div>
+                <div class="d-flex gap-1 fw-bold">
+                    <span>₹</span> 
+                    <input type="number" value="0" class="border rounded text-center fw-bold" style="width: 50px; outline: none;">
+                </div>
+            </div>
+            <div class="sum-block text-end bg-light p-2 rounded border" style="min-width: 150px;">
+                <div class="sum-label text-primary">AMOUNT PAYABLE</div>
+                <div class="sum-val sum-val-blue" id="sumTotal">₹0.00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-panel">
+        <div class="btn-grid">
+            <div class="action-btn" onclick="addTab()" style="border-left: 4px solid var(--blue-primary);">
+                <i class="fas fa-plus-circle"></i>
+                <div class="mt-1">New Tab <span class="badge bg-light text-primary border ms-1">F7</span></div>
+            </div>
+            <div class="action-btn text-danger" onclick="deleteTab()" style="border-left: 4px solid #ef4444;">
+                <i class="fas fa-trash-alt"></i>
+                <div class="mt-1">Delete Tab <span class="badge bg-light text-danger border ms-1">F8</span></div>
+            </div>
+            <a href="{% url 'customers:customer_list' %}" class="action-btn" style="color: #10b981; text-decoration: none; border-left: 4px solid #10b981;">
+                <i class="fas fa-users"></i>
+                <div class="mt-1">Membership</div>
+            </a>
+            <div class="action-btn text-warning" onclick="clearCart()" style="border-left: 4px solid #f59e0b;">
+                <i class="fas fa-times-circle"></i>
+                <div class="mt-1">Abort Transaction</div>
+            </div>
+        </div>
+
+        <div id="selectedProfileCard" style="display: none;">
+            <div class="profile-card position-relative border-0" style="background: linear-gradient(135deg, white, #f8fafc); box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 12px;">
+                <div class="profile-header border-bottom pb-2 mb-2 px-2 pt-2">
+                    <div class="profile-icon bg-primary shadow-sm"><i class="fas fa-user-circle"></i></div>
+                    <div id="profName" class="fw-bold fs-6 text-dark">Selected Profile</div>
+                </div>
+                <div class="px-2 pb-2">
+                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                        <span class="text-muted fw-bold">Loyalty Points:</span>
+                        <span id="profPoints" class="badge bg-warning text-dark fw-bold shadow-sm">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 0.8rem;">
+                        <span class="text-muted fw-bold">Due Amount:</span>
+                        <span id="profDue" class="text-danger fw-bold fs-6">₹0.00</span>
+                    </div>
+                    <button class="btn w-100 fw-bold btn-sm shadow-sm" style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8;" onclick="checkout('tab')">
+                        <i class="fas fa-hand-holding-usd me-1"></i> Put on Tab (Pay Later)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="payment-row">
+            <button class="pay-btn btn-main pulse" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="checkout('cash', '80')">
+                <i class="fas fa-print"></i>
+                <div>PAY & PRINT 80MM (F4)</div>
+            </button>
+            <button class="pay-btn" style="background: linear-gradient(135deg, #3b82f6, #2563eb);" onclick="checkout('upi')">
+                <i class="fas fa-mobile-alt"></i>
+                <div>UPI</div>
+                <span>F5</span>
+            </button>
+            <button class="pay-btn" style="background: linear-gradient(135deg, #06b6d4, #0891b2);" onclick="checkout('card')">
+                <i class="fas fa-credit-card"></i>
+                <div>CARD</div>
+                <span>F3</span>
+            </button>
+        </div>
+        
+        <div class="print-strip">
+            <button class="btn-print" onclick="checkout('cash', '58')"><i class="fas fa-receipt"></i> 58MM <span>F1</span></button>
+            <button class="btn-print" onclick="checkout('cash', 'normal')"><i class="fas fa-file-invoice"></i> A4 <span>F2</span></button>
+            <button class="btn-print" onclick="openSplitPayment()"><i class="fas fa-layer-group"></i> MIXED <span>F12</span></button>
+        </div>
+
+        <div class="mt-2">
+            <button class="pay-btn w-100" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); height: 50px;" onclick="aiAction()">
+                <i class="fas fa-robot me-2"></i> SMART AI ASSISTANT <span class="ms-auto">F10</span>
+            </button>
+        </div>
+        
+        <div class="text-center mt-3"><button class="btn btn-sm text-secondary bg-transparent border-0 small" style="font-size: 0.65rem; opacity: 0.5;">SECURE CLOUD SYNC ACTIVE • SESSION: {{ request.user.username|upper }}</button></div>
+    </div>
+</div>
+
+<form id="hiddenCheckoutForm" method="POST" action="{% url 'billing:invoice_create' %}" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="customer" id="hdnCustomer">
+    <input type="hidden" name="payment_method" id="hdnMethod">
+    <input type="hidden" name="items_json" id="hdnItems">
+    <input type="hidden" name="pos_origin" value="true">
+    <input type="hidden" name="cash_tendered" id="hdnCash">
+</form>
+
+<!-- Modal -->
+<div id="splitPaymentModal">
+    <div class="modal-box">
+        <h5 class="fw-bold mb-4">Mixed Payment</h5>
+        <div class="mb-3">
+            <label class="form-label text-muted small fw-bold text-uppercase">Total</label>
+            <div class="fs-2 fw-bold text-dark mb-2" id="splitTotalDisplay">₹0.00</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label small fw-bold">Cash Tendered</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light">₹</span>
+                <input type="number" id="splitCash" class="form-control form-control-lg fw-bold" placeholder="0" oninput="calcSplit()">
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="form-label small fw-bold">Online / UPI Remaining</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light">₹</span>
+                <input type="number" id="splitOther" class="form-control form-control-lg fw-bold" readonly>
+            </div>
+            <div class="mt-2 text-danger small fw-bold" id="splitChange" style="display:none;">Change Due: ₹<span>0.00</span></div>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-light w-50 fw-bold" onclick="closeSplitPayment()">Cancel</button>
+            <button class="btn btn-primary w-50 fw-bold" onclick="confirmSplitCheckout()">Complete Bill</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const TAX_RATE = 0.18; // Fixed 18% standard
+    
+    // Theme switching logic
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+        let icon = document.getElementById('themeIcon');
+        let btn = document.getElementById('themeToggleBtn');
+        if (document.body.classList.contains('dark-mode')) {
+            icon.classList.replace('fa-moon', 'fa-sun');
+            icon.classList.replace('text-dark', 'text-warning');
+            btn.classList.replace('btn-light', 'btn-dark');
+            localStorage.setItem('pos_theme', 'dark');
+        } else {
+            icon.classList.replace('fa-sun', 'fa-moon');
+            icon.classList.replace('text-warning', 'text-dark');
+            btn.classList.replace('btn-dark', 'btn-light');
+            localStorage.setItem('pos_theme', 'light');
+        }
+    }
+    
+    // On Load
+    if (localStorage.getItem('pos_theme') === 'dark') {
+        toggleTheme();
+    }
+    
+    let tabs = ['T1'];
+    let tabCarts = { 'T1': [] };
+    let activeTab = 'T1';
+    let cart = tabCarts[activeTab];
+
+    const products = [
+        {% for p in products %}
+        {
+            id: {{ p.id }},
+            name: "{{ p.name|escapejs }}",
+            sku: "{{ p.sku|escapejs }}",
+            price: {{ p.unit_price|default:0 }} * (1 - ({{ p.discount_percent|default:0 }} / 100)),
+            originalPrice: {{ p.unit_price|default:0 }},
+            discount: {{ p.discount_percent|default:0 }},
+            stock: {{ p.quantity_in_stock|default:0 }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const dom = {
+        barcode: document.getElementById('barcodeSearch'),
+        results: document.getElementById('searchResults'),
+        cartBody: document.getElementById('cartBody'),
+        emptyState: document.getElementById('emptyState')
+    };
+
+    // Global listeners
+    document.addEventListener('click', (e) => {
+        if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT' && !e.target.closest('.modal-box') && !e.target.closest('.ai-chat-panel')) {
+            dom.barcode.focus();
+        }
+    });
+
+    document.getElementById('customerSelect').addEventListener('change', function() {
+        const val = this.value;
+        const card = document.getElementById('selectedProfileCard');
+        const nameDisp = document.getElementById('profName');
+        const pointsDisp = document.getElementById('profPoints');
+        const dueDisp = document.getElementById('profDue');
+        
+        if (val === 'walkin') {
+            card.style.display = 'none';
+        } else {
+            card.style.display = 'block';
+            const opt = this.options[this.selectedIndex];
+            nameDisp.innerText = opt.getAttribute('data-name');
+            pointsDisp.innerText = opt.getAttribute('data-points');
+            dueDisp.innerText = '₹' + parseFloat(opt.getAttribute('data-due') || 0).toFixed(2);
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'F9') { e.preventDefault(); dom.barcode.focus(); }
+        if(e.key === 'F1') { e.preventDefault(); checkout('cash', '58'); }
+        if(e.key === 'F2') { e.preventDefault(); checkout('cash', 'normal'); }
+        if(e.key === 'F4') { e.preventDefault(); checkout('cash', '80'); }
+        if(e.key === 'F5') { e.preventDefault(); checkout('upi'); }
+        if(e.key === 'F3') { e.preventDefault(); checkout('card'); }
+        if(e.key === 'F12') { e.preventDefault(); openSplitPayment(); }
+        if(e.key === 'F8') { e.preventDefault(); deleteTab(); }
+        if(e.key === 'F7') { e.preventDefault(); addTab(); }
+        if(e.key === 'F10') { e.preventDefault(); aiAction(); }
+    });
+
+    // Multi Tabs
+    window.switchTab = function(id) {
+        activeTab = id;
+        cart = tabCarts[id];
+        
+        // UI update
+        let tabCol = document.getElementById('tabsColumn');
+        tabCol.innerHTML = '';
+        tabs.forEach(t => {
+            tabCol.innerHTML += `<button class="tab-btn ${t===activeTab?'active':''}" onclick="switchTab('${t}')">${t}</button>`;
+        });
+        tabCol.innerHTML += `<button class="tab-btn tab-add" onclick="addTab()"><i class="fas fa-plus"></i></button>`;
+        
+        updateCart();
+    };
+
+    window.addTab = function() {
+        let nextId = 'T' + (tabs.length + 1);
+        tabs.push(nextId);
+        tabCarts[nextId] = [];
+        switchTab(nextId);
+    };
+
+    window.deleteTab = function() {
+        if(tabs.length === 1) {
+            clearCart();
+            return;
+        }
+        if(cart.length > 0 && !confirm("Abort transaction and close this tab?")) return;
+        
+        // Remove tab from array and map
+        const idx = tabs.indexOf(activeTab);
+        tabs.splice(idx, 1);
+        delete tabCarts[activeTab];
+        
+        // Switch to the previous tab or first tab
+        let nextTab = tabs[Math.max(0, idx - 1)];
+        switchTab(nextTab);
+    };
+
+    // Barcode & Search Input
+    dom.barcode.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        if(query.length === 0) {
+            dom.results.style.display = 'none';
+            return;
+        }
+
+        const exact = products.find(p => p.sku === query);
+        if(exact) {
+            addToCart(exact);
+            e.target.value = '';
+            dom.results.style.display = 'none';
+            return;
+        }
+
+        if(query.length >= 2) {
+            const q = query.toLowerCase();
+            const res = products.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)).slice(0, 8);
+            if(res.length > 0) {
+                dom.results.innerHTML = res.map(r => `
+                    <div class="search-item" onclick="selectSearchItem(${r.id})">
+                        <div>
+                            <div class="fw-bold">${r.name}</div>
+                            <div class="small text-muted">${r.sku}</div>
+                        </div>
+                        <div class="fw-bold text-primary">₹${parseFloat(r.price).toFixed(2)}</div>
+                    </div>
+                `).join('');
+                dom.results.style.display = 'block';
+            } else {
+                dom.results.style.display = 'none';
+            }
+        }
+    });
+
+    dom.barcode.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') {
+            e.preventDefault();
+            if(dom.results.style.display === 'block') {
+                const q = dom.barcode.value.toLowerCase();
+                const matched = products.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
+                if(matched.length > 0) selectSearchItem(matched[0].id);
+            }
+        }
+    });
+
+    window.selectSearchItem = function(id) {
+        addToCart(products.find(p => p.id === id));
+        dom.barcode.value = '';
+        dom.results.style.display = 'none';
+        dom.barcode.focus();
+    };
+
+    function addToCart(product) {
+        let ex = cart.find(i => i.id === product.id);
+        let desiredQty = ex ? ex.qty + 1 : 1;
+        
+        if(desiredQty > product.stock) {
+            showNotification(`RESTOCK IMMEDIATELY: ${product.name} is out of stock!`, 'error');
+            return;
+        }
+
+        if(ex) ex.qty += 1;
+        else cart.push({ ...product, qty: 1 });
+        updateCart();
+    }
+
+    window.changeQty = function(index, delta) {
+        let maxStock = cart[index].stock;
+        let newQty = cart[index].qty + delta;
+        
+        if(newQty > maxStock) {
+            showNotification(`Cannot add more. Limit reached (Stock: ${maxStock})`, 'error');
+            return;
+        }
+        
+        cart[index].qty = newQty;
+        if(cart[index].qty <= 0) cart.splice(index, 1);
+        updateCart();
+    };
+
+    window.clearCart = function() {
+        if(cart.length > 0 && confirm("Abort transaction on this tab?")) {
+            cart.length = 0; 
+            updateCart();
+        }
+    };
+
+    let checkoutTotal = 0;
+    function updateCart() {
+        if(cart.length === 0) {
+            dom.emptyState.style.display = 'flex';
+            dom.cartBody.innerHTML = '';
+            checkoutTotal = 0;
+            renderTotals(0,0,0,0);
+            return;
+        }
+
+        dom.emptyState.style.display = 'none';
+        
+        let html = '';
+        let cCount = 0, sub = 0;
+
+        cart.forEach((item, i) => {
+            cCount += item.qty;
+            let ext = item.price * item.qty;
+            let discountAmt = (item.originalPrice - item.price) * item.qty;
+            let tax = ext * TAX_RATE;
+            let net = ext + tax;
+            sub += ext;
+
+            html += `
+                <tr>
+                    <td class="text-muted fw-bold">${i+1}</td>
+                    <td class="fw-bold" style="color: #3b82f6;">${item.sku}</td>
+                    <td class="fw-bold">${item.name}</td>
+                    <td>
+                        <div class="d-flex align-items-center bg-light border rounded overflow-hidden mx-auto" style="width: 80px;">
+                            <button class="border-0 bg-transparent px-2" onclick="changeQty(${i},-1)">-</button>
+                            <div class="text-center fw-bold w-100">${item.qty}</div>
+                            <button class="border-0 bg-transparent px-2" onclick="changeQty(${i},1)">+</button>
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        ${item.discount > 0 ? `<div class="text-muted text-decoration-line-through small">₹${parseFloat(item.originalPrice).toFixed(2)}</div>` : ''}
+                        ₹${parseFloat(item.price).toFixed(2)}
+                    </td>
+                    <td class="text-end text-danger">${discountAmt > 0 ? '-₹'+discountAmt.toFixed(2) : '-₹0.00'}</td>
+                    <td class="text-end fw-bold">₹${net.toFixed(2)}</td>
+                    <td class="text-center"><button class="border-0 bg-transparent text-danger" onclick="cart.splice(${i},1); updateCart()"><i class="fas fa-trash"></i></button></td>
+                </tr>
+            `;
+        });
+
+        dom.cartBody.innerHTML = html;
+        let taxAmt = sub * TAX_RATE;
+        checkoutTotal = sub + taxAmt;
+        renderTotals(cCount, sub, taxAmt, checkoutTotal);
+    }
+
+    function renderTotals(count, sub, tax, total) {
+        document.getElementById('sumCount').innerText = count;
+        document.getElementById('sumSubtotal').innerText = '₹' + sub.toFixed(2);
+        document.getElementById('sumTax').innerText = '₹' + tax.toFixed(2);
+        document.getElementById('sumTotal').innerText = '₹' + total.toFixed(2);
+    }
+
+    // Checkout Logic
+    window.checkout = function(method, printSize = null) {
+        if(cart.length === 0) return showNotification('Cart is empty!', 'error');
+        
+        document.getElementById('hdnCustomer').value = document.getElementById('customerSelect').value;
+        document.getElementById('hdnMethod').value = method;
+        document.getElementById('hdnItems').value = JSON.stringify(cart.map(i => ({ product_id: i.id, quantity: i.qty, unit_price: i.originalPrice, discount_percent: i.discount })));
+        
+        const form = document.getElementById('hiddenCheckoutForm');
+        const fd = new FormData(form);
+        
+        // Show loading state
+        showNotification('Processing bill...', 'info');
+
+        fetch(form.action, { method: 'POST', body: fd })
+        .then(resp => resp.json())
+        .then(data => {
+            if(data.status === 'success') {
+                const invoiceUrl = data.invoice_url;
+                
+                // Clear cart locally
+                cart.length = 0; 
+                updateCart();
+                showNotification(data.message || 'Invoice generated successfully!', 'success');
+
+                // Rapid Print Handling
+                if (printSize) {
+                    let printUrl = invoiceUrl;
+                    if (printSize === '58' || printSize === '80') {
+                        // Support size param
+                        printUrl = invoiceUrl + (invoiceUrl.includes('?') ? '&' : '?') + 'size=' + printSize;
+                    }
+                    
+                    // Open print window
+                    const win = window.open(printUrl, 'ThermalPrint', 'width=450,height=700');
+                    if (!win) showNotification('Pop-up blocked! Please allow pop-ups.', 'error');
+                } else {
+                    // Default behavior: just go to the invoice detail or thermal
+                    window.location.href = invoiceUrl;
+                }
+            } else {
+                showNotification('ERROR: ' + (data.message || 'Billing failed.'), 'error');
+            }
+        }).catch(err => {
+            console.error(err);
+            showNotification('Network error. Check connection.', 'error');
+        });
+    };
+
+    // Split
+    window.openSplitPayment = function() {
+        if(cart.length === 0) return alert('Cart empty');
+        document.getElementById('splitTotalDisplay').innerText = '₹' + checkoutTotal.toFixed(2);
+        document.getElementById('splitCash').value = '';
+        document.getElementById('splitOther').value = checkoutTotal.toFixed(2);
+        document.getElementById('splitChange').style.display = 'none';
+        document.getElementById('splitPaymentModal').style.display = 'flex';
+        setTimeout(() => document.getElementById('splitCash').focus(), 100);
+    };
+
+    window.closeSplitPayment = function() {
+        document.getElementById('splitPaymentModal').style.display = 'none';
+        dom.barcode.focus();
+    };
+
+    window.calcSplit = function() {
+        let cash = parseFloat(document.getElementById('splitCash').value) || 0;
+        let rem = checkoutTotal - cash;
+        if(rem < 0) {
+            document.getElementById('splitOther').value = "0.00";
+            document.getElementById('splitChange').style.display = 'block';
+            document.getElementById('splitChange').innerHTML = `Change Due: ₹<span>${Math.abs(rem).toFixed(2)}</span>`;
+        } else {
+            document.getElementById('splitOther').value = rem.toFixed(2);
+            document.getElementById('splitChange').style.display = 'none';
+        }
+    };
+
+    window.confirmSplitCheckout = function() {
+        document.getElementById('hdnCash').value = parseFloat(document.getElementById('splitCash').value) || 0;
+        checkout('mixed');
+        closeSplitPayment();
+    };
+    
+    // ── Notification System ──
+    function showNotification(msg, type) {
+        let n = document.createElement('div');
+        n.className = 'torvix-notif ' + (type || 'info');
+        n.innerHTML = '<i class="fas ' + (type==='error' ? 'fa-exclamation-triangle' : 'fa-check-circle') + ' me-2"></i>' + msg;
+        document.body.appendChild(n);
+        setTimeout(() => { n.style.opacity = '0'; setTimeout(() => n.remove(), 400); }, 3500);
+    }
+
+    // AI Automated Logic
+    window.aiAction = function() { 
+        if (typeof toggleAIOverlay === 'function') {
+            toggleAIOverlay();
+        } else {
+            alert("AI module loading...");
+        }
+    };
+</script>
+
+<!-- Inject Torvix AI Chat Panel -->
+{% include 'billing/ai_overlay.html' %}
+
+{% endblock %}

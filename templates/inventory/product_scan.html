@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Scan Product Label - ERP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 animate__animated animate__fadeIn">
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card-header bg-gradient-primary text-white text-center py-4 border-0">
+                <i class="fas fa-camera fa-3x mb-3"></i>
+                <h3 class="mb-0 fw-bold">AI Product Scanner</h3>
+                <p class="mb-0 opacity-75">Take a photo of any product label to automatically add it</p>
+            </div>
+            <div class="card-body p-5 text-center">
+                <div class="mb-4">
+                    <div id="scanner-placeholder" class="bg-light p-5 rounded-4 border-dashed border-primary mb-3">
+                        <i class="fas fa-image fa-4x text-muted opacity-50 mb-3"></i>
+                        <h5 class="text-secondary fw-bold">Ready to Scan</h5>
+                        <p class="text-muted mb-0">Upload or take a photo of a product's label to extract details</p>
+                    </div>
+                    <div id="image-preview" class="d-none mb-3">
+                        <img id="preview-img" src="" class="img-fluid rounded-4 shadow-sm border border-primary border-3" alt="Preview">
+                        <p id="scanning-msg" class="text-info mt-3 fw-bold d-none">
+                            <i class="fas fa-spinner fa-spin"></i> AI Analysis in progress...
+                        </p>
+                    </div>
+                </div>
+
+                <form action="{% url 'inventory:product_scan' %}" method="post" enctype="multipart/form-data" id="scanForm">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2">
+                        <label for="label_photo" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+                            <i class="fas fa-camera-viewfinder me-2"></i> Choose Photo / Take Picture
+                        </label>
+                        <input type="file" name="label_photo" id="label_photo" class="d-none" accept="image/*" capture="environment">
+                        
+                        <button type="submit" id="submitBtn" class="btn btn-success btn-lg rounded-pill px-5 shadow-sm d-none">
+                            <i class="fas fa-robot me-2"></i> Analyze with AI
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-4 text-muted small">
+                    <i class="fas fa-info-circle me-1"></i> For better results, ensure the label is well-lit and the text is clear.
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'inventory:product_list' %}" class="text-secondary text-decoration-none">
+                <i class="fas fa-arrow-left me-1"></i> Back to Product List
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+.border-dashed {
+    border: 3px dashed #dee2e6;
+    transition: all 0.3s ease;
+}
+.border-dashed:hover {
+    border-color: #007bff;
+    background-color: #f0f7ff !important;
+}
+</style>
+
+<script>
+document.getElementById('label_photo').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('preview-img').src = e.target.result;
+            document.getElementById('image-preview').classList.remove('d-none');
+            document.getElementById('scanner-placeholder').classList.add('d-none');
+            document.getElementById('submitBtn').classList.remove('d-none');
+        }
+        reader.readAsDataURL(file);
+    }
+});
+
+document.getElementById('scanForm').addEventListener('submit', function() {
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('scanning-msg').classList.remove('d-none');
+});
+</script>
+{% endblock %}

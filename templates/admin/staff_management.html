@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Staff Management | Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid admin-section">
+    <!-- Header -->
+    <div class="admin-header mb-4">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h2 mb-0">
+                    <i class="fas fa-users-cog me-2" style="color: #17a2b8;"></i> Staff Management
+                </h1>
+                <p class="text-muted mt-2">Manage employees, salaries, and shifts</p>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'adminpanel:staff_add' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i> Add Staff Member
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="stat-box card border-0 shadow-sm bg-light">
+                <div class="card-body text-center">
+                    <h3 class="text-primary mb-1">{{ total_staff }}</h3>
+                    <p class="text-muted mb-0">Active Staff</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-box card border-0 shadow-sm bg-light">
+                <div class="card-body text-center">
+                    <h3 class="text-warning mb-1">{{ inactive_staff }}</h3>
+                    <p class="text-muted mb-0">Inactive Staff</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-box card border-0 shadow-sm bg-light">
+                <div class="card-body text-center">
+                    <h3 class="text-info mb-1">{{ staff_members.count }}</h3>
+                    <p class="text-muted mb-0">Total Staff</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-box card border-0 shadow-sm bg-light">
+                <div class="card-body text-center">
+                    <a href="{% url 'adminpanel:dashboard' %}" class="btn btn-outline-secondary btn-sm w-100">
+                        <i class="fas fa-chart-line me-1"></i> Go to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-bottom">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2" style="color: #17a2b8;"></i> Staff Directory
+                    </h5>
+                </div>
+                <div class="col-auto">
+                    <input type="search" class="form-control form-control-sm" id="staffSearch" placeholder="Search by name, ID or email...">
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover staff-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Employee ID</th>
+                            <th>Name</th>
+                            <th>Designation</th>
+                            <th>Department</th>
+                            <th>Shift</th>
+                            <th>Base Salary</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for staff in staff_members %}
+                        <tr class="staff-row" data-search="{{ staff.employee_id|lower }} {{ staff.user.get_full_name|lower }} {{ staff.user.email|lower }}">
+                            <td>
+                                <span class="badge bg-secondary">{{ staff.employee_id }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%; margin-right: 10px; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                        {{ staff.user.first_name|first|upper }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ staff.user.get_full_name }}</strong><br>
+                                        <small class="text-muted">{{ staff.user.email }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ staff.designation }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ staff.department }}</span>
+                            </td>
+                            <td>
+                                <small>
+                                    {% if staff.shift_start and staff.shift_end %}
+                                        {{ staff.shift_start|time:"H:i" }} - {{ staff.shift_end|time:"H:i" }}
+                                    {% else %}
+                                        <span class="text-muted">{{ staff.get_shift_type_display }}</span>
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                <strong class="text-success">${{ staff.base_salary|floatformat:2 }}</strong>
+                            </td>
+                            <td>
+                                {% if staff.employment_status == 'active' %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-circle-check me-1"></i> Active
+                                    </span>
+                                {% elif staff.employment_status == 'on_leave' %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-pause-circle me-1"></i> On Leave
+                                    </span>
+                                {% elif staff.employment_status == 'terminated' %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times-circle me-1"></i> Terminated
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ staff.get_employment_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'adminpanel:staff_detail' staff.id %}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'adminpanel:staff_edit' staff.id %}" class="btn btn-sm btn-outline-warning" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-3x mb-3 opacity-50 d-block"></i>
+                                No staff members found. <a href="{% url 'admin:staff_add' %}">Add your first staff member</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff by Department Chart -->
+    <div class="row mt-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2" style="color: #007bff;"></i> Staff by Department
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for dept in staff_members|dictsort:"department" %}
+                            {% if forloop.counter <= 10 %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 pb-3">
+                                <span><i class="fas fa-building me-2" style="color: #6f42c1;"></i> {{ dept.department }}</span>
+                                <span class="badge bg-primary rounded-pill">{{ dept }}</span>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employment Status Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2" style="color: #28a745;"></i> Employment Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% with active=staff_members|length %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 pb-3">
+                            <span><i class="fas fa-circle-check me-2" style="color: #28a745;"></i> Active</span>
+                            <span class="badge bg-success rounded-pill">{{ total_staff }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 pb-3">
+                            <span><i class="fas fa-times-circle me-2" style="color: #dc3545;"></i> Terminated</span>
+                            <span class="badge bg-danger rounded-pill">{{ inactive_staff }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 pb-3">
+                            <span><i class="fas fa-pause-circle me-2" style="color: #ffc107;"></i> On Leave</span>
+                            <span class="badge bg-warning rounded-pill">0</span>
+                        </div>
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-section {
+    background-color: #f8f9fa;
+    padding: 20px 0;
+}
+
+.admin-header {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 0 -12px;
+    padding: 20px 12px;
+}
+
+.staff-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.staff-table tbody tr:hover {
+    background-color: #f8f9fa;
+    box-shadow: inset 0 0 0 1px #dee2e6;
+}
+
+.stat-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+}
+
+#staffSearch {
+    border-radius: 20px;
+    padding: 8px 15px;
+    border: 1px solid #dee2e6;
+}
+</style>
+
+<script>
+// Staff Search Filter
+document.getElementById('staffSearch').addEventListener('keyup', function() {
+    const searchTerm = this.value.toLowerCase();
+    document.querySelectorAll('.staff-row').forEach(row => {
+        const searchData = row.getAttribute('data-search');
+        row.style.display = searchData.includes(searchTerm) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

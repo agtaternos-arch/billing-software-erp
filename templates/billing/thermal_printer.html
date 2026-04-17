@@ -1,0 +1,600 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Thermal Print - {{ invoice.invoice_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ─── Settings Panel ─── */
+    .settings-panel {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+
+    .settings-panel h4 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 18px;
+        color: var(--text-primary);
+        margin-bottom: 24px;
+        letter-spacing: 0.5px;
+    }
+    
+    .settings-panel h6 {
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--text-primary);
+        margin-bottom: 12px;
+        margin-top: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .settings-panel label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+    }
+
+    .settings-panel .form-control,
+    .settings-panel .form-select {
+        background: #fff;
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        color: var(--text-primary);
+        transition: border-color 0.2s ease;
+    }
+
+    .settings-panel .form-control:focus,
+    .settings-panel .form-select:focus {
+        border-color: var(--neon-blue);
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+    }
+
+    .settings-panel .form-check-input:checked {
+        background-color: var(--neon-blue);
+        border-color: var(--neon-blue);
+    }
+
+    /* ─── Live Preview Panel ─── */
+    .preview-panel {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        position: sticky;
+        top: 20px;
+    }
+
+    .preview-panel h4 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 18px;
+        color: var(--text-primary);
+        margin-bottom: 16px;
+    }
+
+    .preview-badge {
+        background: rgba(37,99,235,0.1);
+        color: var(--neon-blue);
+        border: 1px solid rgba(37,99,235,0.2);
+        border-radius: 6px;
+        padding: 2px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    /* ─── Thermal Receipt Styling ─── */
+    .thermal-receipt {
+        background: #fef6e8;
+        border: 2px dashed #d4a55a;
+        border-radius: 4px;
+        padding: 20px 16px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 12px;
+        color: #1a1a1a;
+        max-width: 302px;  /* 80mm default */
+        margin: 0 auto;
+        transition: max-width 0.3s ease;
+        line-height: 1.5;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .thermal-receipt.width-57 {
+        max-width: 216px; /* 57mm */
+    }
+
+    .thermal-receipt.width-80 {
+        max-width: 302px; /* 80mm */
+    }
+
+    .receipt-header {
+        text-align: center;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px dashed #555;
+    }
+
+    .receipt-header .biz-name {
+        font-weight: bold;
+        font-size: 16px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .receipt-header .biz-address {
+        font-size: 11px;
+        color: #444;
+        text-decoration: underline;
+    }
+
+    .receipt-header .biz-phone {
+        font-size: 11px;
+        color: #444;
+    }
+
+    .receipt-info {
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px dashed #555;
+    }
+
+    .receipt-info-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+    }
+
+    .receipt-info-row .label {
+        color: var(--neon-blue);
+        font-weight: bold;
+    }
+
+    .receipt-items {
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px dashed #555;
+    }
+
+    .receipt-item {
+        margin-bottom: 4px;
+    }
+
+    .receipt-item .item-name {
+        font-size: 11px;
+        font-weight: bold;
+    }
+
+    .receipt-item .item-detail {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+    }
+
+    .receipt-totals .total-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+    }
+
+    .receipt-totals .total-row.grand-total {
+        font-weight: bold;
+        font-size: 14px;
+        border-top: 1px dashed #555;
+        padding-top: 4px;
+        margin-top: 4px;
+    }
+
+    .receipt-footer {
+        text-align: center;
+        margin-top: 12px;
+        padding-top: 8px;
+        border-top: 1px dashed #555;
+        font-style: italic;
+        font-size: 11px;
+        color: #666;
+    }
+
+    /* ─── Action Buttons ─── */
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .action-buttons .btn {
+        flex: 1;
+        padding: 12px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-print-thermal {
+        background: var(--neon-blue);
+        color: #fff;
+        border: none;
+        box-shadow: 0 4px 15px rgba(37,99,235,0.25);
+    }
+
+    .btn-print-thermal:hover {
+        background: #1d4ed8;
+        color: #fff;
+        box-shadow: 0 6px 20px rgba(37,99,235,0.35);
+        transform: translateY(-1px);
+    }
+
+    .btn-download-receipt {
+        background: #fff;
+        color: var(--neon-purple);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .btn-download-receipt:hover {
+        background: var(--neon-purple);
+        color: #fff;
+        border-color: var(--neon-purple);
+        transform: translateY(-1px);
+    }
+
+    /* ─── Print Media Queries ─── */
+    @media print {
+        /* Hide everything except the receipt */
+        body * {
+            visibility: hidden !important;
+        }
+
+        .thermal-receipt,
+        .thermal-receipt * {
+            visibility: visible !important;
+        }
+
+        .thermal-receipt {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #fff !important;
+            border: none !important;
+            padding: 4mm !important;
+            margin: 0 !important;
+            max-width: none !important;
+            width: var(--print-width) !important;
+            box-shadow: none !important;
+        }
+
+        /* Hide sidebar, navbar, footer */
+        .sidebar, .navbar-custom, .footer, .settings-panel, .preview-panel,
+        .action-buttons, .breadcrumb-area, .preview-badge, .preview-panel > h4 {
+            display: none !important;
+        }
+
+        .main-content {
+            margin-left: 0 !important;
+            padding: 0 !important;
+        }
+
+        @page {
+            margin: 0;
+            size: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <div class="row mb-3 breadcrumb-area">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0" style="background: transparent;">
+                    <li class="breadcrumb-item"><a href="{% url 'billing:invoice_list' %}" style="color: var(--neon-blue); text-decoration: none;">Invoices</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'billing:invoice_detail' invoice.id %}" style="color: var(--neon-blue); text-decoration: none;">#{{ invoice.invoice_number }}</a></li>
+                    <li class="breadcrumb-item active" style="color: var(--text-secondary);">Thermal Print</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- ═══════ LEFT: Settings Panel ═══════ -->
+        <div class="col-lg-7 mb-4">
+            <div class="settings-panel">
+                <h4><i class="fas fa-print me-2"></i> Thermal Printer Settings</h4>
+
+                <!-- Paper Width -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="fw-bold d-block mb-2">Paper Width</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="paperWidth" id="width57" value="57" onchange="updatePaperWidth()">
+                            <label class="form-check-label" for="width57">57mm (2.25")</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="paperWidth" id="width80" value="80" checked onchange="updatePaperWidth()">
+                            <label class="form-check-label" for="width80">80mm (3.15")</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="currencySelect" class="fw-bold d-block mb-2">Currency</label>
+                        <select id="currencySelect" class="form-select" onchange="updatePreview()">
+                            <option value="$" selected>USD ($)</option>
+                            <option value="₹">INR (₹)</option>
+                            <option value="€">EUR (€)</option>
+                            <option value="£">GBP (£)</option>
+                            <option value="¥">JPY (¥)</option>
+                            <option value="د.إ">AED (د.إ)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Business Details -->
+                <h6><i class="fas fa-store me-1"></i> Business Details</h6>
+                <div class="mb-3">
+                    <label for="bizName">Business Name</label>
+                    <input type="text" class="form-control" id="bizName" value="{{ business.name }}" oninput="updatePreview()">
+                </div>
+                <div class="mb-3">
+                    <label for="bizAddress">Business Address</label>
+                    <input type="text" class="form-control" id="bizAddress" value="{{ business.address }}" placeholder="123 Street, City, Country" oninput="updatePreview()">
+                </div>
+                <div class="mb-3">
+                    <label for="bizPhone">Phone Number</label>
+                    <input type="text" class="form-control" id="bizPhone" value="{{ business.phone }}" oninput="updatePreview()">
+                </div>
+
+                <!-- Invoice Details -->
+                <h6><i class="fas fa-file-invoice me-1"></i> Invoice Details</h6>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="invNumber">Invoice Number</label>
+                        <input type="text" class="form-control" id="invNumber" value="{{ invoice.invoice_number }}" oninput="updatePreview()">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="invDate">Date</label>
+                        <input type="text" class="form-control" id="invDate" value="{{ invoice.invoice_date|date:'M d, Y' }}" oninput="updatePreview()">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="custName">Customer Name (Optional)</label>
+                    <input type="text" class="form-control" id="custName" value="{{ invoice.customer.name|default:'Walk-in Customer' }}" oninput="updatePreview()">
+                </div>
+
+                <!-- Tax Rate -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="taxRate">Tax Rate (%)</label>
+                        <input type="number" class="form-control" id="taxRate" value="10" min="0" max="100" step="0.5" oninput="recalculate()">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="footerMsg">Footer Message</label>
+                        <input type="text" class="form-control" id="footerMsg" value="Thank you for your business!" oninput="updatePreview()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ RIGHT: Live Preview ═══════ -->
+        <div class="col-lg-5 mb-4">
+            <div class="preview-panel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0"><i class="fas fa-eye me-2"></i> Live Preview</h4>
+                    <span class="preview-badge" id="widthBadge">80mm</span>
+                </div>
+
+                <!-- The Thermal Receipt -->
+                <div class="thermal-receipt width-80" id="thermalReceipt">
+                    <!-- Header -->
+                    <div class="receipt-header">
+                        <div class="biz-name" id="previewBizName">{{ business.name|upper }}</div>
+                        <div class="biz-address" id="previewBizAddress">{{ business.address }}</div>
+                        <div class="biz-phone" id="previewBizPhone">{{ business.phone }}</div>
+                    </div>
+
+                    <!-- Invoice Info -->
+                    <div class="receipt-info">
+                        <div class="receipt-info-row">
+                            <span class="label">Invoice #:</span>
+                            <span id="previewInvNumber">{{ invoice.invoice_number }}</span>
+                        </div>
+                        <div class="receipt-info-row">
+                            <span class="label">Date:</span>
+                            <span id="previewDate">{{ invoice.invoice_date|date:'M d, Y' }}</span>
+                        </div>
+                        <div class="receipt-info-row">
+                            <span class="label">Customer:</span>
+                            <span id="previewCustomer">{{ invoice.customer.name|default:'Walk-in Customer' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Line Items -->
+                    <div class="receipt-items" id="previewItems">
+                        {% for item in invoice.items.all %}
+                        <div class="receipt-item">
+                            <div class="item-name">{{ item.product.name }}</div>
+                            <div class="item-detail">
+                                <span>{{ item.quantity }} x <span class="currency-symbol">$</span>{{ item.unit_price|floatformat:2 }}</span>
+                                <span><span class="currency-symbol">$</span>{{ item.line_total|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center" style="font-size: 11px; color: #999;">No items</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="receipt-totals" id="previewTotals">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span><span class="currency-symbol">$</span> <span id="previewSubtotal">{{ invoice.subtotal|floatformat:2 }}</span></span>
+                        </div>
+                        <div class="total-row">
+                            <span>Tax (<span id="previewTaxLabel">10</span>%):</span>
+                            <span><span class="currency-symbol">$</span> <span id="previewTax">0.00</span></span>
+                        </div>
+                        <div class="total-row grand-total">
+                            <span>TOTAL:</span>
+                            <span><span class="currency-symbol">$</span> <span id="previewTotal">0.00</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="receipt-footer" id="previewFooter">
+                        Thank you for your business!
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-print-thermal" onclick="printReceipt()">
+                        <i class="fas fa-print me-2"></i> Print Receipt
+                    </button>
+                    <button class="btn btn-download-receipt" onclick="downloadReceipt()">
+                        <i class="fas fa-download me-2"></i> Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial calculation
+    recalculate();
+});
+
+// ─── Original invoice data from Django context ───
+const invoiceSubtotal = parseFloat('{{ invoice.subtotal|floatformat:2 }}') || 0;
+
+function updatePaperWidth() {
+    const receipt = document.getElementById('thermalReceipt');
+    const badge = document.getElementById('widthBadge');
+    const is57 = document.getElementById('width57').checked;
+    
+    receipt.classList.remove('width-57', 'width-80');
+    if (is57) {
+        receipt.classList.add('width-57');
+        badge.textContent = '57mm';
+        // Set print width CSS variable
+        document.documentElement.style.setProperty('--print-width', '57mm');
+    } else {
+        receipt.classList.add('width-80');
+        badge.textContent = '80mm';
+        document.documentElement.style.setProperty('--print-width', '80mm');
+    }
+}
+
+function updatePreview() {
+    // Business details
+    const bizName = document.getElementById('bizName').value;
+    const bizAddress = document.getElementById('bizAddress').value;
+    const bizPhone = document.getElementById('bizPhone').value;
+    
+    document.getElementById('previewBizName').textContent = bizName.toUpperCase();
+    document.getElementById('previewBizAddress').textContent = bizAddress;
+    document.getElementById('previewBizPhone').textContent = bizPhone;
+    
+    // Invoice details
+    document.getElementById('previewInvNumber').textContent = document.getElementById('invNumber').value;
+    document.getElementById('previewDate').textContent = document.getElementById('invDate').value;
+    document.getElementById('previewCustomer').textContent = document.getElementById('custName').value;
+    
+    // Footer
+    document.getElementById('previewFooter').textContent = document.getElementById('footerMsg').value;
+    
+    // Currency
+    const currency = document.getElementById('currencySelect').value;
+    document.querySelectorAll('.currency-symbol').forEach(el => {
+        el.textContent = currency;
+    });
+}
+
+function recalculate() {
+    const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+    const currency = document.getElementById('currencySelect').value;
+    
+    const taxAmount = invoiceSubtotal * (taxRate / 100);
+    const total = invoiceSubtotal + taxAmount;
+    
+    document.getElementById('previewTaxLabel').textContent = taxRate;
+    document.getElementById('previewSubtotal').textContent = invoiceSubtotal.toFixed(2);
+    document.getElementById('previewTax').textContent = taxAmount.toFixed(2);
+    document.getElementById('previewTotal').textContent = total.toFixed(2);
+    
+    updatePreview();
+}
+
+function printReceipt() {
+    window.print();
+}
+
+function downloadReceipt() {
+    // Use html2canvas-style approach: capture the receipt as an image + convert to PDF
+    // For simplicity, we'll create a new window with just the receipt content and trigger print-to-PDF
+    const receipt = document.getElementById('thermalReceipt');
+    const is57 = document.getElementById('width57').checked;
+    const paperWidth = is57 ? '57mm' : '80mm';
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Receipt - ${document.getElementById('invNumber').value}</title>
+            <style>
+                @page {
+                    margin: 0;
+                    size: ${paperWidth} auto;
+                }
+                body {
+                    margin: 0;
+                    padding: 4mm;
+                    font-family: 'Courier New', Courier, monospace;
+                    font-size: 12px;
+                    color: #1a1a1a;
+                    background: #fff;
+                }
+                .receipt-header { text-align: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #555; }
+                .biz-name { font-weight: bold; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
+                .biz-address { font-size: 11px; color: #444; text-decoration: underline; }
+                .biz-phone { font-size: 11px; color: #444; }
+                .receipt-info { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #555; }
+                .receipt-info-row { display: flex; justify-content: space-between; font-size: 11px; }
+                .receipt-info-row .label { font-weight: bold; }
+                .receipt-items { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #555; }
+                .receipt-item { margin-bottom: 4px; }
+                .item-name { font-size: 11px; font-weight: bold; }
+                .item-detail { display: flex; justify-content: space-between; font-size: 11px; }
+                .total-row { display: flex; justify-content: space-between; font-size: 11px; }
+                .grand-total { font-weight: bold; font-size: 14px; border-top: 1px dashed #555; padding-top: 4px; margin-top: 4px; }
+                .receipt-footer { text-align: center; margin-top: 12px; padding-top: 8px; border-top: 1px dashed #555; font-style: italic; font-size: 11px; color: #666; }
+            </style>
+        </head>
+        <body>
+            ${receipt.innerHTML}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    
+    // Give the window a moment to render, then trigger print (Save as PDF)
+    setTimeout(() => {
+        printWindow.print();
+    }, 400);
+}
+</script>
+{% endblock %}

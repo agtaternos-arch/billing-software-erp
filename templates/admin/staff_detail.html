@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Staff: {{ staff.user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid admin-section">
+    <div class="admin-header mb-4">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h2 mb-0">
+                    <i class="fas fa-user me-2" style="color: #17a2b8;"></i> {{ staff.user.get_full_name }}
+                </h1>
+                <p class="text-muted mt-2">{{ staff.designation }} • {{ staff.department }}</p>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'adminpanel:staff_edit' staff.id %}" class="btn btn-warning">
+                    <i class="fas fa-edit me-1"></i> Edit
+                </a>
+                <a href="{% url 'adminpanel:staff_management' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-4 mb-4">
+            <!-- Personal Info -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Personal Information</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Employee ID:</strong> {{ staff.employee_id }}</p>
+                    <p class="mb-2"><strong>Email:</strong> {{ staff.user.email }}</p>
+                    <p class="mb-2"><strong>Phone:</strong> {{ staff.phone|default:"N/A" }}</p>
+                    <p class="mb-2"><strong>Address:</strong> {{ staff.address|default:"N/A" }}</p>
+                </div>
+            </div>
+
+            <!-- Employment Details -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Employment Details</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Status:</strong> <span class="badge bg-success">{{ staff.get_employment_status_display }}</span></p>
+                    <p class="mb-2"><strong>Joined:</strong> {{ staff.date_of_joining|date:"M d, Y" }}</p>
+                    <p class="mb-2"><strong>Shift:</strong> {{ staff.get_shift_type_display }}</p>
+                </div>
+            </div>
+
+            <!-- Banking Details -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Banking Details</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Bank:</strong> {{ staff.bank_name|default:"N/A" }}</p>
+                    <p class="mb-2"><strong>Account:</strong> {{ staff.account_number|default:"N/A" }}</p>
+                    <p class="mb-2"><strong>IFSC:</strong> {{ staff.ifsc_code|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-8 mb-4">
+            <!-- Salary Information -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-light border-bottom d-flex justify-content-between">
+                    <h5 class="mb-0">Salary Information</h5>
+                    <span class="badge bg-primary">Monthly Cost: <strong>${{ staff.get_total_earnings|floatformat:2 }}</strong></span>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="salary-box">
+                                <p class="text-muted mb-1">Base Salary</p>
+                                <h4 class="text-primary mb-0">${{ staff.base_salary|floatformat:2 }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="salary-box">
+                                <p class="text-muted mb-1">Bonus</p>
+                                <h4 class="text-success mb-0">${{ staff.bonus|floatformat:2 }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="salary-box">
+                                <p class="text-muted mb-1">Allowances</p>
+                                <h4 class="text-info mb-0">${{ staff.allowances|floatformat:2 }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="salary-box">
+                                <p class="text-muted mb-1">Deductions</p>
+                                <h4 class="text-danger mb-0">${{{ staff.deductions|floatformat:2 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Salary Records -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0">Salary History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Gross</th>
+                                    <th>Deductions</th>
+                                    <th>Net</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in salary_records %}
+                                <tr>
+                                    <td>{{ record.month|date:"M Y" }}</td>
+                                    <td class="fw-bold">${{ record.gross_salary|floatformat:2 }}</td>
+                                    <td>${{ record.deductions|floatformat:2 }}</td>
+                                    <td class="fw-bold text-success">${{ record.net_salary|floatformat:2 }}</td>
+                                    <td>
+                                        {% if record.payment_status == 'paid' %}
+                                        <span class="badge bg-success">Paid</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">{{ record.get_payment_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ record.payment_date|date:"M d"|default:"—" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="6" class="text-center text-muted">No salary records</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Shifts -->
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0">Recent Shifts (Last 30)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time In</th>
+                                    <th>Time Out</th>
+                                    <th>Hours</th>
+                                    <th>Earnings</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for shift in recent_shifts %}
+                                <tr>
+                                    <td>{{ shift.clock_in|date:"M d, Y" }}</td>
+                                    <td>{{ shift.clock_in|time:"H:i" }}</td>
+                                    <td>{{ shift.clock_out|time:"H:i"|default:"—" }}</td>
+                                    <td>{{ shift.total_hours|floatformat:1 }}h</td>
+                                    <td class="text-success fw-bold">${{ shift.earnings|floatformat:2 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center text-muted">No shifts recorded</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-section {
+    background-color: #f8f9fa;
+    padding: 20px 0;
+}
+
+.admin-header {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 0 -12px;
+    padding: 20px 12px;
+}
+
+.salary-box {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+</style>
+{% endblock %}

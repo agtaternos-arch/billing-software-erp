@@ -1,0 +1,217 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt #{{ invoice.invoice_number }}</title>
+    <style>
+        body { 
+            background: #e2e8f0; 
+            display: flex; 
+            justify-content: center; 
+            padding: 20px; 
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+        }
+        
+        .thermal-receipt {
+            background: white;
+            padding: 10px;
+            color: black;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .w-58 { width: 58mm; font-size: 11px; }
+        .w-80 { width: 80mm; font-size: 14px; }
+        
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-left { text-align: left; }
+        .bold { font-weight: bold; }
+        
+        .divider { border-bottom: 1px dashed black; margin: 6px 0; }
+        .divider-solid { border-bottom: 1px solid black; margin: 6px 0; }
+        
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { padding: 2px 0; vertical-align: top; }
+        
+        /* Grid widths for items */
+        .col-qty { width: 12%; text-align: left; padding-right: 2px; }
+        .col-desc { width: 38%; text-align: left; word-wrap: break-word; padding-right: 4px; }
+        .col-rate { width: 25%; text-align: right; padding-right: 4px; }
+        .col-amt { width: 25%; text-align: right; }
+        
+        .meta-grid { display: flex; justify-content: space-between; margin-bottom: 2px; }
+
+        .control-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-family: sans-serif;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .btn-primary { background: #3b82f6; color: white; border-color: #2563eb; }
+        .btn:hover { background: #e2e8f0; }
+        .btn-primary:hover { background: #2563eb; }
+
+        @media print {
+            body { background: white; padding: 0; align-items: flex-start; justify-content: flex-start;}
+            .no-print { display: none !important; }
+            .thermal-receipt { box-shadow: none; padding: 0; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Non-Printable Configuration Box -->
+    <div class="control-panel no-print">
+        <div style="font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 4px; text-transform: uppercase;">Paper Size</div>
+        <div style="display: flex; gap: 5px;">
+            <button class="btn" onclick="setSize('w-58')" id="btn-58">58mm</button>
+            <button class="btn btn-primary" onclick="setSize('w-80')" id="btn-80">80mm</button>
+        </div>
+        <div style="border-top: 1px solid #e2e8f0; margin-top: 5px; padding-top: 10px;">
+            <button class="btn" style="width: 100%; background: #10b981; color: white; border-color: #059669;" onclick="window.print()">
+                <svg style="width: 16px; height: 16px; vertical-align: text-bottom; margin-right: 4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                PRINT RECEIPT
+            </button>
+        </div>
+    </div>
+
+    <!-- Thermal Print Area -->
+    <div class="thermal-receipt w-80" id="receipt">
+        <div class="text-center bold" style="font-size: 1.25em; text-transform: uppercase;">{{ invoice.payment_method_label }}</div>
+        <div class="text-center bold" style="font-size: 1.1em;">{{ business.name|default:"TORVIX SUPERMARKET" }}</div>
+        <div class="text-center">{{ business.address|default:"Wayanad, Kerala" }}</div>
+        <div class="text-center">Ph: {{ business.phone|default:"9876543210" }}</div>
+        <div class="text-center mb-2">VAT TIN : 72451285236</div>
+        
+        <div class="divider"></div>
+        
+        <div class="meta-grid">
+            <div>Bill No : {{ invoice.invoice_number }}</div>
+            <div>Time : {{ invoice.created_at|date:"H:i" }}</div>
+        </div>
+        <div class="meta-grid">
+            <div>Date &nbsp;&nbsp;: {{ invoice.invoice_date|date:"d-m-Y" }}</div>
+            <div>User : {{ invoice.created_by.first_name|default:"Admin" }}</div>
+        </div>
+        
+        <div style="margin-top: 4px;">Party &nbsp;&nbsp;: {{ invoice.customer_name|default:"Walk-in Customer" }}</div>
+        {% if invoice.customer_phone %}
+        <div>Contact : {{ invoice.customer_phone }}</div>
+        {% endif %}
+        
+        <div class="divider-solid"></div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-desc">ITEM</th>
+                    <th class="col-qty">QTY</th>
+                    <th class="col-rate">RATE</th>
+                    <th class="col-amt">AMT</th>
+                </tr>
+            </thead>
+        </table>
+        <div class="divider"></div>
+        <table>
+            <tbody>
+                {% for item in invoice.items.all %}
+                <tr>
+                    <td class="col-desc">{{ item.product.name|truncatechars:20 }}</td>
+                    <td class="col-qty">{{ item.quantity }}</td>
+                    <td class="col-rate">{{ item.unit_price|floatformat:2 }}</td>
+                    <td class="col-amt">{{ item.line_total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="divider"></div>
+        
+        <table>
+            <tr>
+                <td colspan="3" class="text-right" style="padding-right: 8px;">Subtotal :</td>
+                <td class="col-amt bold">{{ invoice.subtotal|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td colspan="3" class="text-right" style="padding-right: 8px;">Output GST @ 18% :</td>
+                <td class="col-amt">{{ invoice.tax_amount|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td colspan="3" class="text-right bold pt-2" style="font-size: 1.1em; padding-right: 8px;">TOTAL :</td>
+                <td class="col-amt bold" style="font-size: 1.1em;">{{ invoice.total_amount|floatformat:2 }}</td>
+            </tr>
+        </table>
+        
+        <div class="divider-solid"></div>
+        
+        <table>
+            <tr>
+                <td class="col-desc">Tender Type :</td>
+                <td class="col-rate"></td>
+                <td class="text-right">{{ invoice.payment_method|default:"Cash"|title }}</td>
+            </tr>
+        </table>
+        
+        <div class="divider"></div>
+        
+        <div class="text-center" style="margin-top: 15px;">
+            <div>Thank You</div>
+            <div>Visit Again</div>
+        </div>
+        <div class="divider"></div>
+        <div class="text-center" style="font-size: 0.8em; margin-top: 2px;">Powered by Torvix ERP</div>
+    </div>
+
+    <script>
+        function setSize(sizeClass) {
+            const receipt = document.getElementById('receipt');
+            receipt.classList.remove('w-58', 'w-80');
+            receipt.classList.add(sizeClass);
+            
+            // Toggle primary button state
+            document.getElementById('btn-58').classList.remove('btn-primary');
+            document.getElementById('btn-80').classList.remove('btn-primary');
+            
+            if(sizeClass === 'w-58') document.getElementById('btn-58').classList.add('btn-primary');
+            else document.getElementById('btn-80').classList.add('btn-primary');
+        }
+        
+        // Auto-scale based on query param
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const size = params.get('size');
+            if(size === '58') {
+                setSize('w-58');
+            } else if(size === '80') {
+                setSize('w-80');
+            }
+        });
+
+        // Auto print prompt when opened from checkout or buttons
+        if(window.name === 'TorvixThermalPrint' || window.name === 'ThermalPrint') {
+            setTimeout(() => {
+                window.print();
+            }, 600);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Staff - {{ staff.user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container admin-form-container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-0">
+                <i class="fas fa-user-edit me-2" style="color: #17a2b8;"></i> 
+                {% if is_edit %}Edit Staff Member{% else %}Add New Staff Member{% endif %}
+            </h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'adminpanel:staff_management' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i> {{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="form-section">
+        {% csrf_token %}
+        
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0">Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">First Name *</label>
+                        <input type="text" class="form-control" name="first_name" required value="{% if staff %}{{ staff.user.first_name }}{% endif %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Last Name *</label>
+                        <input type="text" class="form-control" name="last_name" required value="{% if staff %}{{ staff.user.last_name }}{% endif %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Email *</label>
+                        <input type="email" class="form-control" name="email" required value="{% if staff %}{{ staff.user.email }}{% else %}{{ request.POST.email }}{% endif %}" {% if is_edit %}disabled{% endif %}>
+                        {% if not is_edit %}<small class="text-muted">Staff will use this as login username</small>{% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Phone</label>
+                        <input type="tel" class="form-control" name="phone" value="{% if staff %}{{ staff.phone }}{% endif %}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Address</label>
+                        <textarea class="form-control" name="address" rows="2">{% if staff %}{{ staff.address }}{% endif %}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0">Employment Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Designation *</label>
+                        <input type="text" class="form-control" name="designation" required value="{% if staff %}{{ staff.designation }}{% endif %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Department *</label>
+                        <input type="text" class="form-control" name="department" required value="{% if staff %}{{ staff.department }}{% else %}Sales{% endif %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Shift Type *</label>
+                        <select class="form-control" name="shift_type" required>
+                            <option value="full_day" {% if staff.shift_type == 'full_day' %}selected{% endif %}>Full Day</option>
+                            <option value="morning" {% if staff.shift_type == 'morning' %}selected{% endif %}>Morning (6 AM - 2 PM)</option>
+                            <option value="afternoon" {% if staff.shift_type == 'afternoon' %}selected{% endif %}>Afternoon (2 PM - 10 PM)</option>
+                            <option value="night" {% if staff.shift_type == 'night' %}selected{% endif %}>Night (10 PM - 6 AM)</option>
+                            <option value="part_time" {% if staff.shift_type == 'part_time' %}selected{% endif %}>Part Time</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Employment Status</label>
+                        <select class="form-control" name="employment_status" required>
+                            <option value="active" {% if staff.employment_status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if staff.employment_status == 'inactive' %}selected{% endif %}>Inactive</option>
+                            <option value="on_leave" {% if staff.employment_status == 'on_leave' %}selected{% endif %}>On Leave</option>
+                            <option value="terminated" {% if staff.employment_status == 'terminated' %}selected{% endif %}>Terminated</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0">Salary Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Base Salary ($) *</label>
+                        <input type="number" class="form-control" name="base_salary" step="0.01" min="0" required value="{% if staff %}{{ staff.base_salary }}{% else %}0{% endif %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Hourly Rate ($)</label>
+                        <input type="number" class="form-control" name="hourly_rate" step="0.01" min="0" value="{% if staff %}{{ staff.hourly_rate }}{% else %}0{% endif %}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Bonus ($)</label>
+                        <input type="number" class="form-control" name="bonus" step="0.01" min="0" value="{% if staff %}{{ staff.bonus }}{% else %}0{% endif %}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Allowances ($)</label>
+                        <input type="number" class="form-control" name="allowances" step="0.01" min="0" value="{% if staff %}{{ staff.allowances }}{% else %}0{% endif %}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Deductions ($)</label>
+                        <input type="number" class="form-control" name="deductions" step="0.01" min="0" value="{% if staff %}{{ staff.deductions }}{% else %}0{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0">Banking Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Bank Name</label>
+                        <input type="text" class="form-control" name="bank_name" value="{% if staff %}{{ staff.bank_name }}{% endif %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Account Number</label>
+                        <input type="text" class="form-control" name="account_number" value="{% if staff %}{{ staff.account_number }}{% endif %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">IFSC Code</label>
+                        <input type="text" class="form-control" name="ifsc_code" value="{% if staff %}{{ staff.ifsc_code }}{% endif %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if not is_edit %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0">Login Credentials</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> These credentials will be used to login to the billing panel
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Username *</label>
+                        <input type="text" class="form-control" name="username" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Password *</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-save me-2"></i> {% if is_edit %}Update Staff{% else %}Add Staff Member{% endif %}
+            </button>
+            <a href="{% url 'adminpanel:staff_management' %}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-times me-2"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+.admin-form-container {
+    background-color: #f8f9fa;
+    padding: 30px;
+    border-radius: 8px;
+}
+
+.form-section {
+    margin-top: 20px;
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.12) !important;
+}
+
+.form-label {
+    color: #212529;
+    margin-bottom: 6px;
+}
+
+.form-control {
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    padding: 10px 12px;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+</style>
+{% endblock %}

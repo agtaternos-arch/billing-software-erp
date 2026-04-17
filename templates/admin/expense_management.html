@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Expense Management | Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid admin-section">
+    <!-- Header -->
+    <div class="admin-header mb-4">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h2 mb-0">
+                    <i class="fas fa-receipt me-2" style="color: #dc3545;"></i> Expense Management
+                </h1>
+                <p class="text-muted mt-2">Track and manage business expenses</p>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'adminpanel:expense_management' %}" class="btn btn-danger btn-lg">
+                    <i class="fas fa-plus me-2"></i> Add Expense
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="stat-box card border-0 shadow-sm" style="border-left: 4px solid #dc3545;">
+                <div class="card-body">
+                    <div class="text-muted mb-2">
+                        <i class="fas fa-calendar-alt me-1"></i> Monthly Expenses
+                    </div>
+                    <h3 class="mb-0 text-danger">${{ total_monthly_expenses|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="stat-box card border-0 shadow-sm" style="border-left: 4px solid #007bff;">
+                <div class="card-body">
+                    <div class="text-muted mb-2">
+                        <i class="fas fa-list-check me-1"></i> Total Expenses
+                    </div>
+                    <h3 class="mb-0 text-primary">{{ expenses|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="stat-box card border-0 shadow-sm" style="border-left: 4px solid #28a745;">
+                <div class="card-body">
+                    <div class="text-muted mb-2">
+                        <i class="fas fa-chart-pie me-1"></i> Categories
+                    </div>
+                    <h3 class="mb-0 text-success">{{ expense_by_category|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Table -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light border-bottom">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2" style="color: #dc3545;"></i> Recent Expenses
+                    </h5>
+                </div>
+                <div class="col-auto">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="search" class="form-control form-control-sm" id="expenseSearch" placeholder="Search..." style="width: 200px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover expense-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Vendor</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr class="expense-row" data-search="{{ expense.category|lower }} {{ expense.description|lower }}">
+                            <td>
+                                <small>{{ expense.expense_date|date:"M d, Y" }}</small>
+                            </td>
+                            <td>
+                                <span class="badge" style="background: {% if expense.category == 'salaries' %}#17a2b8{% elif expense.category == 'utilities' %}#ffc107{% elif expense.category == 'supplies' %}#28a745{% elif expense.category == 'maintenance' %}#dc3545{% elif expense.category == 'rent' %}#007bff{% else %}#6f42c1{% endif %};">
+                                    {{ expense.get_category_display }}
+                                </span>
+                            </td>
+                            <td>{{ expense.description }}</td>
+                            <td>
+                                <small>{{ expense.vendor_name|default:"N/A" }}</small>
+                            </td>
+                            <td>
+                                <strong class="text-danger">${{ expense.amount|floatformat:2 }}</strong>
+                            </td>
+                            <td>
+                                {% if expense.is_approved %}
+                                <span class="badge bg-success">Approved</span>
+                                {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'billing:expense_detail' expense.id %}" class="btn btn-sm btn-outline-primary" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'billing:expense_edit' expense.id %}" class="btn btn-sm btn-outline-warning" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-3x mb-3 opacity-50 d-block"></i>
+                                No expenses recorded yet. 
+                                <a href="{% url 'billing:expense_create' %}">Add your first expense</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Charts -->
+    <div class="row">
+        <!-- Expenses by Category -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-pie-chart me-2" style="color: #dc3545;"></i> Expenses by Category
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for exp in expense_by_category %}
+                        <div class="list-group-item border-0 d-flex justify-content-between align-items-center py-2">
+                            <div>
+                                <small class="text-muted">{{ exp.category }}</small><br>
+                                <span class="badge bg-light text-dark">{{ exp.count }} transactions</span>
+                            </div>
+                            <strong class="text-danger">${{ exp.total|floatformat:2 }}</strong>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expense Summary -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2" style="color: #28a745;"></i> Expense Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-6 py-3 border-end">
+                            <div class="text-muted mb-2">Total This Month</div>
+                            <h4 class="text-danger mb-0">${{ total_monthly_expenses|floatformat:2 }}</h4>
+                        </div>
+                        <div class="col-md-6 py-3">
+                            <div class="text-muted mb-2">Average Expense</div>
+                            {% with avg=total_monthly_expenses|divide:expense_by_category|length %}
+                            <h4 class="text-primary mb-0">${{ avg|floatformat:2 }}</h4>
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-section {
+    background-color: #f8f9fa;
+    padding: 20px 0;
+}
+
+.admin-header {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 0 -12px;
+    padding: 20px 12px;
+}
+
+.expense-row:hover {
+    background-color: #f8f9fa;
+}
+
+.stat-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+}
+
+#expenseSearch {
+    border-radius: 20px;
+    padding: 8px 15px;
+    border: 1px solid #dee2e6;
+}
+</style>
+
+<script>
+// Expense Search Filter
+document.getElementById('expenseSearch').addEventListener('keyup', function() {
+    const searchTerm = this.value.toLowerCase();
+    document.querySelectorAll('.expense-row').forEach(row => {
+        const searchData = row.getAttribute('data-search');
+        row.style.display = searchData.includes(searchTerm) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

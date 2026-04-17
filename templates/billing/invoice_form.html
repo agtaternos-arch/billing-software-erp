@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Invoice{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Create New Invoice</h2>
+
+    <form method="post" id="invoiceForm">
+        {% csrf_token %}
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Invoice Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="id_invoice_number" class="form-label">Invoice Number *</label>
+                        {{ form.invoice_number }}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="id_invoice_date" class="form-label">Invoice Date *</label>
+                        {{ form.invoice_date }}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="id_due_date" class="form-label">Due Date *</label>
+                        {{ form.due_date }}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="id_customer" class="form-label">Customer *</label>
+                        {{ form.customer }}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="id_terms" class="form-label">Payment Terms</label>
+                        {{ form.terms }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_notes" class="form-label">Notes / Remarks</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice Items -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Invoice Items</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered" id="itemsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="30%">Product/Item</th>
+                                <th width="10%" class="text-center">Qty</th>
+                                <th width="15%" class="text-end">Unit Price</th>
+                                <th width="12%" class="text-end">Discount %</th>
+                                <th width="15%" class="text-end">Amount</th>
+                                <th width="8%" class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsBody">
+                            <tr class="item-row">
+                                <td>
+                                    <select class="form-select product-select" name="product" required>
+                                        <option value="">Select Product...</option>
+                                        {% for product in products %}
+                                        <option value="{{ product.id }}" data-price="{{ product.selling_price }}">
+                                            {{ product.name }} (Stock: {{ product.quantity_in_stock }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control text-center quantity" name="quantity" value="1" min="1" required>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control text-end unit-price" name="unit_price" step="0.01" placeholder="0.00" required>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control text-end discount-percent" name="discount_percent" value="0" step="0.01" min="0" max="100">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control text-end line-total" readonly placeholder="0.00">
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-danger remove-item">Remove</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="button" class="btn btn-sm btn-primary" id="addItemBtn">
+                    <i class="fas fa-plus"></i> Add Item
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <strong>Subtotal:</strong>
+                            </div>
+                            <div class="col-6 text-end">
+                                <span id="subtotal">$0.00</span>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <strong>Tax Rate (%):</strong>
+                            </div>
+                            <div class="col-6">
+                                <input type="number" class="form-control text-end" id="taxRate" value="10" step="0.01" min="0" max="100" style="font-size: 0.9rem; padding: 0.25rem;">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Tax Amount:</strong>
+                            </div>
+                            <div class="col-6 text-end">
+                                <span id="taxAmount">$0.00</span>
+                            </div>
+                        </div>
+                        <div class="row" style="border-top: 2px solid #dee2e6; padding-top: 10px;">
+                            <div class="col-6">
+                                <h5>Total:</h5>
+                            </div>
+                            <div class="col-6 text-end">
+                                <h5 id="total">$0.00</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="mb-4">
+            <button type="submit" class="btn btn-success" name="action" value="save">Save as Draft</button>
+            <button type="submit" class="btn btn-primary" name="action" value="send">Save & Send</button>
+            <a href="{% url 'billing:invoice_list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-control, .form-select {
+        font-size: 0.95rem;
+        padding: 0.5rem;
+    }
+    .table td {
+        padding: 0.5rem;
+        vertical-align: middle;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add new item row
+    document.getElementById('addItemBtn').addEventListener('click', function() {
+        addItemRow();
+    });
+
+    // Initial calculation
+    calculateTotals();
+
+    // Event delegation for dynamic elements
+    document.getElementById('itemsBody').addEventListener('change', function(e) {
+        if (e.target.classList.contains('product-select')) {
+            const price = e.target.options[e.target.selectedIndex].dataset.price;
+            e.target.closest('.item-row').querySelector('.unit-price').value = price || '';
+            calculateTotals();
+        }
+        if (e.target.classList.contains('quantity') || 
+            e.target.classList.contains('unit-price') || 
+            e.target.classList.contains('discount-percent')) {
+            calculateItemTotal(e.target.closest('.item-row'));
+            calculateTotals();
+        }
+    });
+
+    document.getElementById('itemsBody').addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-item')) {
+            e.target.closest('.item-row').remove();
+            calculateTotals();
+        }
+    });
+
+    document.getElementById('taxRate').addEventListener('change', calculateTotals);
+});
+
+function addItemRow() {
+    const tbody = document.getElementById('itemsBody');
+    const template = tbody.querySelector('.item-row').cloneNode(true);
+    
+    // Reset values
+    template.querySelector('.product-select').value = '';
+    template.querySelector('.quantity').value = '1';
+    template.querySelector('.unit-price').value = '';
+    template.querySelector('.discount-percent').value = '0';
+    template.querySelector('.line-total').value = '0.00';
+    
+    tbody.appendChild(template);
+}
+
+function calculateItemTotal(row) {
+    const qty = parseFloat(row.querySelector('.quantity').value) || 0;
+    const price = parseFloat(row.querySelector('.unit-price').value) || 0;
+    const discount = parseFloat(row.querySelector('.discount-percent').value) || 0;
+    
+    let total = qty * price;
+    total = total - (total * discount / 100);
+    
+    row.querySelector('.line-total').value = total.toFixed(2);
+}
+
+function calculateTotals() {
+    let subtotal = 0;
+    document.querySelectorAll('.item-row').forEach(row => {
+        const lineTotal = parseFloat(row.querySelector('.line-total').value) || 0;
+        subtotal += lineTotal;
+    });
+    
+    const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+    const taxAmount = subtotal * (taxRate / 100);
+    const total = subtotal + taxAmount;
+    
+    document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
+    document.getElementById('taxAmount').textContent = '$' + taxAmount.toFixed(2);
+    document.getElementById('total').textContent = '$' + total.toFixed(2);
+}
+</script>
+{% endblock %}

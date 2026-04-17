@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Torvix Bills | Professional Software{% endblock %}</title>
+    
+    <!-- Google Fonts (Fallback to system fonts if offline) -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600&family=Outfit:wght@300;500&display=swap" rel="stylesheet">
+    
+    <!-- Local Vendor Assets (Offline Mode) -->
+    <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/all.min.css' %}">
+    
+    <style>
+        :root {
+            --glass-bg: rgba(15, 23, 42, 0.85);
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --neon-cyan: #06b6d4;
+            --neon-green: #10b981;
+            --neon-red: #ef4444;
+            --dark-bg: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: #f8fafc;
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .brand-font { font-family: 'Orbitron', sans-serif; }
+        .body-font { font-family: 'Rajdhani', sans-serif; }
+        .ui-font { font-family: 'Outfit', sans-serif; }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Common Transitions */
+        .btn, .nav-link, .card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { 
+            background: #1e293b; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        /* Global Currency Formatting Helper */
+        .currency-symbol { font-family: 'Outfit', sans-serif; margin-right: 2px; }
+
+        /* KPI Card Styles */
+        .kpi-card {
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            height: 100%;
+        }
+
+        .text-glow-purple { text-shadow: 0 0 10px rgba(139, 92, 246, 0.4); color: var(--accent-purple); }
+        .text-glow-cyan { text-shadow: 0 0 10px rgba(6, 182, 212, 0.4); color: var(--neon-cyan); }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    {% if messages %}
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+        {% for message in messages %}
+        <div class="toast show glass-panel text-white border-0 mb-2" role="alert">
+            <div class="toast-header bg-transparent border-0 text-white">
+                <i class="fas fa-info-circle me-2 {% if message.tags == 'success' %}text-success{% elif message.tags == 'error' %}text-danger{% endif %}"></i>
+                <strong class="me-auto brand-font small">SYSTEM NOTIFICATION</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body ui-font">
+                {{ message }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Local Bootstrap JS -->
+    <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

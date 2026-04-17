@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Customer Categories - ERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 animate__animated animate__fadeInDown">
+    <h1 class="brand-font" style="color: var(--neon-purple);"><i class="fas fa-tags"></i> Customer Categories</h1>
+    <div>
+        <a href="{% url 'customers:category_create' %}" class="btn btn-neon-purple fw-bold shadow-sm" style="border-radius: 8px;">
+            <i class="fas fa-plus"></i> ADD CATEGORY
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-lg glass-panel animate__animated animate__fadeInUp" style="border-radius: 15px; border: 1px solid rgba(0,0,0,0.05);">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table premium-table mb-0">
+                <thead style="background: rgba(124, 58, 237, 0.05);">
+                    <tr>
+                        <th class="text-secondary small fw-bold">CATEGORY NAME</th>
+                        <th class="text-secondary small fw-bold">DESCRIPTION</th>
+                        <th class="text-secondary small fw-bold text-center">DEFAULT DISCOUNT</th>
+                        <th class="text-end text-secondary small fw-bold">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in categories %}
+                    <tr style="transition: all 0.2s; cursor: pointer;" onmouseover="this.style.background='rgba(59, 130, 246, 0.05)'" onmouseout="this.style.background='transparent'">
+                        <td>
+                            <div class="fw-bold text-dark">{{ category.name }}</div>
+                        </td>
+                        <td>
+                            <span class="text-muted small">{{ category.description|default:"No description provided."|truncatechars:60 }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                <i class="fas fa-percentage me-1"></i> {{ category.discount_percent|default:"0.00" }}%
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn action-btn-sm" onclick="alert('Category Edit coming soon!');" style="background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b; border-radius: 6px; padding: 5px 10px;" title="Edit">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <i class="fas fa-users-cog fa-3x mb-3 text-secondary opacity-50"></i>
+                            <h5 class="fw-bold text-muted">No Customer Categories</h5>
+                            <p class="small">Segment your customers for targeted marketing and discounts.</p>
+                            <a href="{% url 'customers:category_create' %}" class="btn btn-sm btn-outline-primary mt-2">Create First Category</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

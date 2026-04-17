@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inventory & Products | Torvix ERP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-grid { 
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.25rem;
+    }
+    .product-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    .product-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.2), transparent);
+        transform: translateX(-100%); transition: 0.6s;
+    }
+    .product-card:hover::before { transform: translateX(100%); }
+    .product-card:hover {
+        background: rgba(255, 255, 255, 0.06);
+        transform: translateY(-8px);
+        border-color: rgba(6, 182, 212, 0.3);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .intel-sidebar {
+        background: rgba(15, 23, 42, 0.3);
+        border-left: 1px solid rgba(255,255,255,0.05);
+        height: calc(100vh - 100px);
+        position: sticky;
+        top: 20px;
+        border-radius: 24px;
+        padding: 1.5rem;
+    }
+    .activity-item {
+        padding: 1rem;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.03);
+        margin-bottom: 0.75rem;
+        border-left: 3px solid #3b82f6;
+        font-size: 0.8rem;
+    }
+    .activity-item.sale { border-left-color: #10b981; }
+    .activity-item.restock { border-left-color: #8b5cf6; }
+    .activity-item.alert { border-left-color: #ef4444; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="brand-font mb-0 text-glow-cyan">GLOBAL <span class="text-white">INVENTORY</span></h2>
+            <p class="text-secondary mb-0">Manage stock levels and product catalog</p>
+        </div>
+        <div class="d-flex">
+            <a href="{% url 'billing:pos_terminal' %}" class="btn btn-outline-success me-2 brand-font"><i class="fas fa-cash-register me-2"></i> BACK TO POS</a>
+            <a href="{% url 'accounts:admin_dashboard' %}" class="btn btn-outline-secondary me-2 brand-font"><i class="fas fa-arrow-left me-2"></i> COMMAND CENTER</a>
+            <a href="{% url 'inventory:category_create' %}" class="btn btn-outline-primary me-2 brand-font"><i class="fas fa-plus me-2"></i> ADD CATEGORY</a>
+            <a href="{% url 'inventory:product_create' %}" class="btn btn-primary brand-font"><i class="fas fa-plus me-2"></i> NEW PRODUCT</a>
+        </div>
+    </div>
+
+    <!-- Filters and Statistics -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+              <div class="glass-panel p-4 h-100">
+                  <div class="small text-secondary text-uppercase mb-2">Total Products</div>
+                  <h4 class="brand-font">{{ products.count }} Items</h4>
+             </div>
+        </div>
+        <div class="col-md-3">
+             <div class="glass-panel p-4 h-100 {% if low_stock_count > 0 %}text-danger{% else %}text-success{% endif %}">
+                  <div class="small text-secondary text-uppercase mb-2">Low Stock</div>
+                  <h4 class="brand-font">{{ low_stock_count }} Alert{{ low_stock_count|pluralize }}</h4>
+             </div>
+        </div>
+        <div class="col-md-6">
+             <div class="glass-panel p-4">
+                  <div class="row g-3">
+                       <div class="col-md-8">
+                            <input type="text" class="form-control" placeholder="Search by name, code or category...">
+                       </div>
+                       <div class="col-md-4">
+                            <select class="form-select">
+                                 <option>All Categories</option>
+                                 {% for category in categories %}
+                                 <option>{{ category.name }}</option>
+                                 {% endfor %}
+                            </select>
+                       </div>
+                  </div>
+             </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-9">
+            <!-- Product List -->
+            <div class="product-grid">
+                {% for product in products %}
+                <div class="product-card p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="brand-font small text-secondary">{{ product.category.name|default:"UNCATEGORIZED"|upper }}</div>
+                        {% if product.quantity_in_stock <= product.low_stock_threshold %}
+                        <span class="stock-badge bg-danger bg-opacity-25 text-danger">URGENT ALERT ({{ product.quantity_in_stock }})</span>
+                        {% elif product.quantity_in_stock == 0 %}
+                        <span class="stock-badge bg-danger bg-opacity-25 text-danger">OUT OF STOCK</span>
+                        {% else %}
+                        <span class="stock-badge bg-success bg-opacity-25 text-success">Optimal ({{ product.quantity_in_stock }})</span>
+                        {% endif %}
+                    </div>
+                    
+                    <h5 class="fw-bold mb-1 text-white">{{ product.name }}</h5>
+                    <div class="d-flex gap-2 mb-3">
+                        <span class="small text-secondary">SKU: {{ product.sku|default:"N/A" }}</span>
+                        {% if product.barcode %}
+                        <span class="small text-secondary border-start ps-2">BAR: {{ product.barcode }}</span>
+                        {% endif %}
+                    </div>
+
+                    {% if product.discount_percent > 0 %}
+                    <div class="badge bg-warning text-dark fw-bold mb-3"><i class="fas fa-percentage me-1"></i> {{ product.discount_percent }}% OFF</div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-end">
+                        <div>
+                            <div class="small text-secondary mb-1">UNIT PRICE</div>
+                            <div class="brand-font text-info h4 mb-0">₹{{ product.unit_price|floatformat:2 }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-secondary mb-1">AVAILABLE</div>
+                            <div class="fw-bold h5 mb-0 text-white-50">{{ product.quantity_in_stock }} {{ product.unit|default:"units" }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-top border-white border-opacity-10 d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-info flex-grow-1 border-0 bg-white bg-opacity-5" onclick="openEditModal({{ product.id }}, '{{ product.name|escapejs }}', {{ product.unit_price }}, {{ product.quantity_in_stock }})"><i class="fas fa-pen-nib me-1"></i>EDIT</button>
+                        <button class="btn btn-sm btn-outline-success flex-grow-1 border-0 bg-white bg-opacity-5" onclick="openRestock({{ product.id }}, '{{ product.name|escapejs }}', {{ product.quantity_in_stock }})"><i class="fas fa-layer-group me-1"></i>RESTOCK</button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5 text-secondary card bg-transparent border-dashed">
+                    <i class="fas fa-box-open fa-3x mb-3 opacity-25"></i>
+                    <p>No products in inventory. Click "NEW PRODUCT" to add one.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Intelligence Sidebar -->
+        <div class="col-lg-3">
+            <div class="intel-sidebar">
+                <h6 class="brand-font mb-4 text-glow-cyan"><i class="fas fa-brain me-2"></i>STOCK INTELLIGENCE</h6>
+                
+                <div class="mb-4">
+                    <div class="small text-secondary text-uppercase fw-bold mb-3" style="font-size: 0.65rem; letter-spacing: 1px;">Live Activity</div>
+                    {% for product in products %}
+                        {% if product.quantity_in_stock <= product.low_stock_threshold %}
+                        <div class="activity-item alert">
+                            <div class="fw-bold">Threshold Violation</div>
+                            <div class="text-secondary small">{{ product.name }} is below {{ product.low_stock_threshold }} units</div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    {% if low_stock_count == 0 %}
+                    <div class="activity-item restock">
+                        <div class="fw-bold">Inventory Healthy</div>
+                        <div class="text-secondary small">No critical stock alerts at this time.</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Dynamic Sales Intelligence -->
+                <div class="glass-panel p-3 mb-4 border-info border-opacity-25 bg-info bg-opacity-5">
+                    <div class="small text-info fw-bold mb-2"><i class="fas fa-lightbulb me-1"></i> TOP PERFORMERS</div>
+                    {% for p in top_products %}
+                    <div class="mb-2 pb-2 border-bottom border-white border-opacity-5 last-child-border-0">
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-white">{{ p.name|truncatechars:20 }}</span>
+                            <span class="text-secondary">{{ p.quantity_in_stock }} units</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="small text-secondary">No sales data recorded yet.</div>
+                    {% endfor %}
+                </div>
+
+                <div class="p-3 rounded border border-white border-opacity-5">
+                    <div class="small text-secondary text-uppercase fw-bold mb-2" style="font-size: 0.65rem;">System Health</div>
+                    <div class="progress" style="height: 6px; background: rgba(255,255,255,0.05);">
+                        <div class="progress-bar bg-success" style="width: 85%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2 small text-secondary">
+                        <span>Database Sync</span>
+                        <span class="text-success">Optimal</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: #1e293b; color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title brand-font"><i class="fas fa-edit me-2 text-info"></i>QUICK EDIT</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editProductForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">PRODUCT NAME</label>
+                        <input type="text" name="name" id="edit_name" class="form-control bg-dark text-white border-secondary" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-secondary small">UNIT PRICE (₹)</label>
+                            <input type="number" step="0.01" name="unit_price" id="edit_price" class="form-control bg-dark text-white border-secondary" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-secondary small">BASE STOCK</label>
+                            <input type="number" name="quantity_in_stock" id="edit_stock" class="form-control bg-dark text-white border-secondary" required>
+                            <div class="small text-muted mt-1">Directly adjust inventory</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info brand-font text-white"><i class="fas fa-save me-2"></i>SAVE CHANGES</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Restock Modal -->
+<div class="modal fade" id="restockModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: #1e293b; color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title brand-font"><i class="fas fa-boxes me-2 text-success"></i>QUICK RESTOCK</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="restockForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">PRODUCT</label>
+                        <div class="fw-bold fs-5" id="restockProductName">—</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">CURRENT STOCK</label>
+                        <div class="fw-bold text-cyan" id="restockCurrentStock">0</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">ADD QUANTITY</label>
+                        <input type="number" name="quantity" min="1" value="10" class="form-control form-control-lg bg-dark text-white border-secondary fw-bold text-center" id="restockQty" required>
+                    </div>
+                    <div class="p-3 rounded" style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2);">
+                        <div class="small text-secondary">NEW TOTAL AFTER RESTOCK</div>
+                        <div class="fw-bold text-success fs-4" id="restockNewTotal">10</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success brand-font"><i class="fas fa-check me-2"></i>CONFIRM RESTOCK</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentStock = 0;
+
+    function openEditModal(productId, name, price, stock) {
+        document.getElementById('edit_name').value = name;
+        document.getElementById('edit_price').value = price;
+        document.getElementById('edit_stock').value = stock;
+        document.getElementById('editProductForm').action = '/inventory/products/' + productId + '/edit/';
+        new bootstrap.Modal(document.getElementById('editProductModal')).show();
+    }
+
+    function openRestock(productId, productName, stock) {
+        currentStock = stock;
+        document.getElementById('restockProductName').textContent = productName;
+        document.getElementById('restockCurrentStock').textContent = stock + ' units';
+        document.getElementById('restockQty').value = 10;
+        document.getElementById('restockNewTotal').textContent = (stock + 10) + ' units';
+        document.getElementById('restockForm').action = '/inventory/products/' + productId + '/restock/';
+        new bootstrap.Modal(document.getElementById('restockModal')).show();
+    }
+    document.getElementById('restockQty').addEventListener('input', function() {
+        const qty = parseInt(this.value) || 0;
+        document.getElementById('restockNewTotal').textContent = (currentStock + qty) + ' units';
+    });
+</script>
+{% endblock %}

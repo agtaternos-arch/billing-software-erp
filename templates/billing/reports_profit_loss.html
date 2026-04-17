@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profit & Loss Analytics | Torvix ERP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pl-container { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+    body { background: #0f172a; }
+    
+    .pl-header h3 { color: #f1f5f9; font-weight: 800; font-size: 1.6rem; }
+    .pl-header p { color: #94a3b8; }
+    
+    .metric-card {
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        padding: 2rem;
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+    .metric-label { color: #94a3b8; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 0.75rem; }
+    .metric-value { font-size: 2rem; font-weight: 800; }
+    .text-revenue { color: #22d3ee; }
+    .text-cogs { color: #f87171; }
+    .text-expense { color: #fbbf24; }
+    
+    .profit-hero {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 20px;
+        overflow: hidden;
+    }
+    .profit-hero .label { color: #cbd5e1; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1.5px; }
+    .profit-hero .value { font-weight: 900; }
+    .profit-sidebar { background: rgba(0,0,0,0.3); border-left: 1px solid rgba(255,255,255,0.08); }
+    .profit-sidebar h6 { color: #94a3b8; font-weight: 700; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; }
+    .profit-sidebar h3 { color: #f1f5f9; font-weight: 800; }
+    
+    .filter-card {
+        background: rgba(30, 41, 59, 0.9);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 14px;
+    }
+    .filter-card .form-label { color: #94a3b8; }
+    .filter-card .form-control { background: #0f172a; border-color: rgba(255,255,255,0.1); color: #f1f5f9; }
+    .filter-card .form-control:focus { border-color: #22d3ee; box-shadow: 0 0 0 2px rgba(34,211,238,0.15); }
+    
+    @media print {
+        body * { visibility: hidden; }
+        .pl-container, .pl-container * { visibility: visible; }
+        .pl-container { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; }
+        .btn, .filter-card { display: none !important; }
+        .metric-card, .profit-hero { background: white !important; color: black !important; border: 1px solid #ccc !important; }
+        .metric-value, .profit-hero .value, .profit-sidebar h3 { color: black !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pl-container">
+    <div class="d-flex justify-content-between align-items-center mb-4 pl-header">
+        <div>
+            <h3><i class="fas fa-chart-line text-success me-2"></i> Profit & Loss Analytics</h3>
+            <p class="mb-0">Financial performance overview</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary text-white border-secondary"><i class="fas fa-arrow-left me-1"></i> Dashboard</a>
+            <button class="btn btn-outline-info" onclick="window.print()"><i class="fas fa-print me-1"></i> Print Report</button>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-card p-3 mb-4">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Start Date</label>
+                <input type="date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">End Date</label>
+                <input type="date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-info w-100 fw-bold"><i class="fas fa-sync-alt me-1"></i> Update</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Main Metrics -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-label">Total Revenue</div>
+                <div class="metric-value text-revenue">₹{{ revenue|floatformat:2 }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-label">Cost of Goods Sold</div>
+                <div class="metric-value text-cogs">₹{{ cost_of_goods|floatformat:2 }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-label">Operating Expenses</div>
+                <div class="metric-value text-expense">₹{{ total_expenses|floatformat:2 }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Net Profit Hero Card -->
+    <div class="profit-hero mb-4">
+        <div class="row g-0">
+            <div class="col-md-8 p-5">
+                <div class="label mb-3">Net Profit for Period</div>
+                <h1 class="display-3 value mb-0 {% if net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    ₹{{ net_profit|floatformat:2 }}
+                </h1>
+            </div>
+            <div class="col-md-4 profit-sidebar p-5 d-flex flex-column justify-content-center">
+                <div class="mb-4">
+                    <h6 class="mb-1">Gross Profit</h6>
+                    <h3>₹{{ gross_profit|floatformat:2 }}</h3>
+                </div>
+                <div>
+                    <h6 class="mb-1">Net Margin</h6>
+                    <h3>{{ margin|floatformat:1 }}%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

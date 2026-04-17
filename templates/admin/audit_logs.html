@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Audit Logs | Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid admin-section">
+    <div class="admin-header mb-4">
+        <h1 class="h2 mb-0">
+            <i class="fas fa-shield-alt me-2" style="color: #6f42c1;"></i> Audit Logs
+        </h1>
+        <p class="text-muted mt-2">System activity and user action history</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="stat-card card border-0 shadow-sm" style="border-left: 4px solid #6f42c1;">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">{{ total_logs }}</h3>
+                    <p class="text-muted mb-0 mt-2">Total Log Entries</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-bottom">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i> Activity Log
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Model</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td><small>{{ log.timestamp|date:"M d, Y H:i:s" }}</small></td>
+                            <td>
+                                {% if log.user %}
+                                <code>{{ log.user.username }}</code>
+                                {% else %}
+                                <span class="text-muted">System</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.action == 'create' %}
+                                <span class="badge bg-success">CREATE</span>
+                                {% elif log.action == 'update' %}
+                                <span class="badge bg-warning">UPDATE</span>
+                                {% elif log.action == 'delete' %}
+                                <span class="badge bg-danger">DELETE</span>
+                                {% elif log.action == 'view' %}
+                                <span class="badge bg-info">VIEW</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ log.get_action_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td><code>{{ log.model_name }}</code></td>
+                            <td>ID: {{ log.object_id }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-section {
+    background-color: #f8f9fa;
+    padding: 20px 0;
+}
+
+.admin-header {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 0 -12px;
+    padding: 20px 12px;
+}
+</style>
+{% endblock %}

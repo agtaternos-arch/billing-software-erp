@@ -1,0 +1,488 @@
+<!-- Torvix AI Chat Agent – Premium Glassmorphic Panel -->
+<style>
+    /* FAB removed — using F10 button instead */
+
+    /* ═══ Chat Panel ═══ */
+    .ai-chat-panel {
+        position: fixed;
+        bottom: 100px;
+        right: 28px;
+        width: 380px;
+        height: 520px;
+        border-radius: 20px;
+        display: none;
+        flex-direction: column;
+        z-index: 1300;
+        overflow: hidden;
+        /* Glassmorphism */
+        background: rgba(15, 23, 42, 0.92);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow:
+            0 25px 60px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        animation: aiSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes aiSlideUp {
+        from { opacity: 0; transform: translateY(30px) scale(0.95); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ─ Header ─ */
+    .ai-chat-header {
+        padding: 18px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.03);
+    }
+    .ai-chat-header .ai-brand {
+        display: flex; align-items: center; gap: 12px;
+    }
+    .ai-avatar {
+        width: 40px; height: 40px; border-radius: 12px;
+        background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; color: white;
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+    .ai-brand-info h4 {
+        margin: 0; font-size: 0.95rem; font-weight: 800;
+        color: #f1f5f9; letter-spacing: 0.5px;
+    }
+    .ai-brand-info .ai-status {
+        font-size: 0.7rem; color: #10b981; display: flex; align-items: center; gap: 5px;
+    }
+    .ai-status-dot {
+        width: 6px; height: 6px; border-radius: 50%; background: #10b981;
+        animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .ai-close-btn {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #94a3b8; width: 32px; height: 32px;
+        border-radius: 8px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+        font-size: 1.1rem;
+    }
+    .ai-close-btn:hover { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+    /* ─ Chat Body ─ */
+    .ai-chat-body {
+        flex-grow: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.1) transparent;
+    }
+    .ai-chat-body::-webkit-scrollbar { width: 4px; }
+    .ai-chat-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+    /* Messages */
+    .ai-bubble {
+        max-width: 85%;
+        padding: 12px 16px;
+        border-radius: 16px;
+        font-size: 0.85rem;
+        line-height: 1.55;
+        animation: msgFadeIn 0.3s ease-out;
+    }
+    @keyframes msgFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .ai-bubble.bot {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        color: #e2e8f0;
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+    }
+    .ai-bubble.user {
+        background: linear-gradient(135deg, #3b82f6, #6366f1);
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+    }
+    .ai-bubble.bot .ai-bold { color: #22d3ee; font-weight: 700; }
+    .ai-bubble.error { border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; }
+
+    /* Quick Suggestions */
+    .ai-chips {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        padding: 0 4px; margin-top: auto;
+    }
+    .ai-chip {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #94a3b8;
+        padding: 7px 14px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .ai-chip:hover {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.4);
+        color: #93c5fd;
+    }
+
+    /* Typing indicator */
+    .ai-typing { display: flex; gap: 5px; padding: 12px 16px; align-self: flex-start; }
+    .ai-typing span {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: #64748b;
+        animation: typingBounce 1.4s infinite;
+    }
+    .ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+    /* ─ Chat Footer ─ */
+    .ai-chat-footer {
+        padding: 14px 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.02);
+    }
+    .ai-input-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 50px;
+        padding: 4px 6px 4px 18px;
+        transition: border-color 0.2s;
+    }
+    .ai-input-wrap:focus-within {
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .ai-input-wrap input {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #f1f5f9;
+        font-size: 0.85rem;
+        font-family: inherit;
+    }
+    .ai-input-wrap input::placeholder { color: #64748b; }
+    .ai-send-btn {
+        width: 38px; height: 38px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #06b6d4, #3b82f6);
+        border: none;
+        color: white;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+    .ai-send-btn:hover { transform: scale(1.1); box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4); }
+</style>
+
+<!-- AI Chat is triggered by the F10 button in POS -->
+
+<!-- Chat Panel -->
+<div class="ai-chat-panel" id="aiPanel">
+    <!-- Header -->
+    <div class="ai-chat-header">
+        <div class="ai-brand">
+            <div class="ai-avatar"><i class="fas fa-brain"></i></div>
+            <div class="ai-brand-info">
+                <h4>Torvix AI</h4>
+                <div class="ai-status"><span class="ai-status-dot"></span> Online — Ready to help</div>
+            </div>
+        </div>
+        <button class="ai-close-btn" onclick="toggleAIOverlay()">✕</button>
+    </div>
+
+    <!-- Chat Body -->
+    <div class="ai-chat-body" id="aiChatBody">
+        <div class="ai-bubble bot">
+            👋 Hi! I'm <span class="ai-bold">Torvix AI</span>, your intelligent billing assistant.
+            Ask me anything — add products, checkout, restock & more!
+        </div>
+
+        <div class="ai-chips" id="aiQuickChips">
+            <div class="ai-chip" onclick="sendAIQuery('Add laptop to cart')">Add laptop</div>
+            <div class="ai-chip" onclick="sendAIQuery('Bill all and print')">Bill & print</div>
+            <div class="ai-chip" onclick="sendAIQuery('Restock 10 soaps')">Restock items</div>
+            <div class="ai-chip" onclick="sendAIQuery('Clear the cart')">Clear cart</div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="ai-chat-footer">
+        <div class="ai-input-wrap">
+            <input type="text" id="aiInput" placeholder="Ask Torvix AI anything..." onkeydown="if(event.key==='Enter') sendAIFromInput()">
+            <button class="ai-send-btn" onclick="sendAIFromInput()">
+                <i class="fas fa-paper-plane" style="font-size: 0.85rem;"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const panel = document.getElementById('aiPanel');
+    const body  = document.getElementById('aiChatBody');
+    const input = document.getElementById('aiInput');
+
+    // Toggle the panel
+    window.toggleAIOverlay = function() {
+        const isVisible = panel.style.display === 'flex';
+        panel.style.display = isVisible ? 'none' : 'flex';
+        if (!isVisible) {
+            setTimeout(() => input.focus(), 200);
+        }
+    };
+
+    // Append message bubble
+    function addBubble(text, sender) {
+        // Kill chips on first user message
+        const chips = document.getElementById('aiQuickChips');
+        if (chips) chips.remove();
+
+        const b = document.createElement('div');
+        b.className = 'ai-bubble ' + sender;
+        b.innerHTML = text;
+        body.appendChild(b);
+        body.scrollTop = body.scrollHeight;
+        return b;
+    }
+
+    // Typing indicator
+    function showTyping() {
+        const t = document.createElement('div');
+        t.className = 'ai-typing';
+        t.id = 'aiTypingIndicator';
+        t.innerHTML = '<span></span><span></span><span></span>';
+        body.appendChild(t);
+        body.scrollTop = body.scrollHeight;
+    }
+    function hideTyping() {
+        const t = document.getElementById('aiTypingIndicator');
+        if (t) t.remove();
+    }
+
+    // ── LOCAL AI ENGINE (no external API needed) ──
+    function processLocally(query) {
+        const q = query.toLowerCase().trim();
+
+        // ──── CLEAR / ABORT ────
+        if (q.includes('clear') || q.includes('abort') || q.includes('reset')) {
+            if (typeof cart !== 'undefined' && cart.length > 0) {
+                cart.length = 0;
+                if (typeof updateCart === 'function') updateCart();
+                return { text: '🗑️ Cart has been cleared successfully. Terminal is ready for a new transaction.' };
+            }
+            return { text: 'Cart is already empty. Ready for new items.' };
+        }
+
+        // ──── CHECKOUT / BILL ────
+        const isBill = q.includes('bill') || q.includes('checkout') || q.includes('pay');
+        const isPrint = q.includes('print');
+
+        // ──── RESTOCK ────
+        if (q.includes('restock')) {
+            return {
+                text: '📦 Sending restock request to server...',
+                serverAction: 'restock'
+            };
+        }
+
+        // ──── PRODUCT SEARCH (fuzzy) ────
+        if (typeof products !== 'undefined' && typeof fuse !== 'undefined') {
+            // Extract quantity
+            let qty = 1;
+            const nums = q.match(/\d+/);
+            if (nums) qty = parseInt(nums[0]);
+
+            // Remove noise words for better search
+            let searchQ = q.replace(/\b(add|get|bill|and|the|a|to|cart|print|invoice|pdf|please|me|checkout|pay)\b/gi, '').trim();
+
+            if (searchQ.length > 1) {
+                const results = fuse.search(searchQ);
+                if (results.length > 0) {
+                    const matched = results[0].item;
+
+                    // Stock check
+                    if (matched.stock !== undefined && matched.stock < qty) {
+                        return {
+                            text: `🚫 <span class="ai-bold">INSUFFICIENT STOCK:</span> ${matched.name} has only ${matched.stock} units available. Restock before billing.`
+                        };
+                    }
+
+                    // Add to cart
+                    if (typeof addToCart === 'function') {
+                        for (let i = 0; i < qty; i++) addToCart(matched);
+                    }
+
+                    let response = `✅ Added <span class="ai-bold">${qty}x ${matched.name}</span> (₹${parseFloat(matched.price).toFixed(2)} each) to the active cart.`;
+
+                    // Auto-checkout if requested
+                    if (isBill) {
+                        setTimeout(() => {
+                            let method = 'cash';
+                            if (q.includes('upi')) method = 'upi';
+                            else if (q.includes('card')) method = 'card';
+                            if (typeof checkout === 'function') checkout(method);
+                        }, 800);
+                        response += `<br><br>💳 Processing <span class="ai-bold">${q.includes('upi') ? 'UPI' : q.includes('card') ? 'Card' : 'Cash'}</span> checkout...`;
+                    }
+
+                    return { text: response };
+                }
+            }
+        }
+
+        // Pure checkout (if they ONLY say 'checkout' or 'bill' and no other words, we can check cart)
+        // If they wrote more (e.g. 'add soap and bill'), we should let the server handle the product match first
+        const isPureCheckout = q === 'checkout' || q === 'bill' || q === 'pay';
+        if (isPureCheckout && typeof cart !== 'undefined') {
+            if (cart.length > 0) {
+                setTimeout(() => {
+                    let method = 'cash';
+                    if (q.includes('upi')) method = 'upi';
+                    else if (q.includes('card')) method = 'card';
+                    if (typeof checkout === 'function') checkout(method);
+                }, 600);
+                return { text: `💳 Processing checkout via <span class="ai-bold">${q.includes('upi') ? 'UPI' : q.includes('card') ? 'Card' : 'Cash'}</span>... ${isPrint ? '🖨️ Print job queued.' : ''}` };
+            } else {
+                return { text: '⚠️ Your cart is empty. Add products first, then I can process the bill.' };
+            }
+        }
+
+        // ──── FALLBACK: try server ────
+        return null;  // null means "send to server endpoint"
+    }
+
+    // ── STATE ──
+    let pendingConfirmation = null;
+
+    // ── SEND MESSAGE ──
+    window.sendAIQuery = function(text) {
+        if (!text || !text.trim()) return;
+        addBubble(text, 'user');
+        showTyping();
+
+        let lowerQ = text.toLowerCase().trim();
+
+        // Check if there is a pending confirmation
+        if (pendingConfirmation) {
+            hideTyping();
+            if (lowerQ === 'yes' || lowerQ === 'y' || lowerQ.includes('proceed') || lowerQ.includes('yes proceed')) {
+                const p = products.find(x => x.id === pendingConfirmation.productId);
+                if (p && typeof addToCart === 'function') {
+                    for(let i=0; i < pendingConfirmation.qty; i++) addToCart(p);
+                    addBubble(`✅ Added ${pendingConfirmation.qty}x <span class="ai-bold">${p.name}</span> to cart.`, 'bot');
+                    
+                    if (pendingConfirmation.checkout && typeof checkout === 'function') {
+                        addBubble(`💳 Processing checkout... 🖨️`, 'bot');
+                        setTimeout(() => checkout('cash', pendingConfirmation.print ? '80' : null), 600);
+                    }
+                }
+                pendingConfirmation = null;
+                return;
+            } else if (lowerQ === 'no' || lowerQ === 'n' || lowerQ.includes('cancel')) {
+                addBubble('Okay, action cancelled. What else can I help with?', 'bot');
+                pendingConfirmation = null;
+                return;
+            }
+            // If they said something completely different, drop confirmation and continue
+            pendingConfirmation = null;
+        }
+
+        setTimeout(() => {
+            hideTyping();
+
+            // Try local processing first
+            const local = processLocally(text);
+
+            if (local) {
+                addBubble(local.text, 'bot');
+
+                // If server action needed (restock), call API
+                if (local.serverAction === 'restock') {
+                    callServer(text);
+                }
+                return;
+            }
+
+            // Fallback to server
+            callServer(text);
+        }, 700);
+    };
+
+    // Server fallback
+    function callServer(text) {
+        const csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfEl) {
+            addBubble('⚠️ Session expired. Please refresh the page.', 'bot error');
+            return;
+        }
+
+        fetch('/api/v1/pos/ai_process/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfEl.value
+            },
+            body: JSON.stringify({ query: text })
+        })
+        .then(r => r.json())
+        .then(data => {
+            addBubble(data.response || 'Processing complete.', 'bot');
+
+            // Handle confirmation requests
+            if (data.action === 'require_confirmation') {
+                pendingConfirmation = {
+                    productId: data.product_id,
+                    qty: data.qty || 1,
+                    checkout: data.is_checkout,
+                    print: data.is_print
+                };
+                return; // Stop here, waiting for user reply
+            }
+
+            // Handle direct cart updates from server
+            if (data.cart_updates && typeof products !== 'undefined') {
+                data.cart_updates.forEach(u => {
+                    const p = products.find(x => x.id === u.id);
+                    if (p && typeof addToCart === 'function') {
+                        for (let i = 0; i < (u.qty || 1); i++) addToCart(p);
+                    }
+                });
+            }
+
+            // Handle direct action commands
+            if (data.action === 'checkout' || data.action === 'checkout_and_print') {
+                if (typeof cart !== 'undefined' && cart.length > 0 && typeof checkout === 'function') {
+                    setTimeout(() => checkout('cash', data.action === 'checkout_and_print' ? '80' : null), 500);
+                }
+            }
+        })
+        .catch(err => {
+            addBubble('❌ Connection failed. Using offline mode. Error: ' + err.message, 'bot error');
+        });
+    }
+
+    // Input handler
+    window.sendAIFromInput = function() {
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+        sendAIQuery(text);
+    };
+})();
+</script>

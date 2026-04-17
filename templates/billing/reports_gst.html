@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}GST Report | Torvix ERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1"><i class="fas fa-file-invoice-dollar text-primary me-2"></i> GST Collection Report</h3>
+            <p class="text-muted small mb-0">Detailed breakdown of CGST and SGST for selected period</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary shadow-sm bg-white" onclick="exportCSV()"><i class="fas fa-file-csv me-1"></i> Export CSV</button>
+            <button class="btn btn-primary shadow-sm" onclick="window.print()"><i class="fas fa-file-pdf me-1"></i> Print / PDF</button>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4" style="background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">Start Date</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">End Date</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-dark w-100"><i class="fas fa-filter me-1"></i> Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-white border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body">
+                    <h6 class="text-muted fw-bold text-uppercase small">Total Taxable Value</h6>
+                    <h3 class="fw-bold text-dark mb-0">₹{{ totals.taxable|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-white border-0 shadow-sm rounded-4 h-100" style="border-left: 4px solid #3b82f6 !important;">
+                <div class="card-body">
+                    <h6 class="text-muted fw-bold text-uppercase small">CGST Collected (9%)</h6>
+                    <h3 class="fw-bold text-primary mb-0">₹{{ totals.cgst|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-white border-0 shadow-sm rounded-4 h-100" style="border-left: 4px solid #8b5cf6 !important;">
+                <div class="card-body">
+                    <h6 class="text-muted fw-bold text-uppercase small">SGST Collected (9%)</h6>
+                    <h3 class="fw-bold text-purple mb-0" style="color: #8b5cf6;">₹{{ totals.sgst|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body">
+                    <h6 class="text-white-50 fw-bold text-uppercase small">Grand Total Amount</h6>
+                    <h3 class="fw-bold text-white mb-0">₹{{ totals.grand_total|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-hover mb-0" id="gstTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="border-0 px-4 py-3 text-muted small text-uppercase">Date</th>
+                        <th class="border-0 py-3 text-muted small text-uppercase">Invoice #</th>
+                        <th class="border-0 py-3 text-muted small text-uppercase">Customer</th>
+                        <th class="border-0 text-end py-3 text-muted small text-uppercase">Taxable Value</th>
+                        <th class="border-0 text-end py-3 text-muted small text-uppercase">CGST</th>
+                        <th class="border-0 text-end py-3 text-muted small text-uppercase">SGST</th>
+                        <th class="border-0 text-end px-4 py-3 text-muted small text-uppercase">Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report_data %}
+                    <tr>
+                        <td class="px-4 py-3">{{ row.date|date:"Y-m-d" }}</td>
+                        <td class="py-3 fw-bold">{{ row.invoice_number }}</td>
+                        <td class="py-3 text-muted">{{ row.customer }}</td>
+                        <td class="text-end py-3">₹{{ row.taxable_amount|floatformat:2 }}</td>
+                        <td class="text-end py-3 text-primary">₹{{ row.cgst|floatformat:2 }}</td>
+                        <td class="text-end py-3" style="color: #8b5cf6;">₹{{ row.sgst|floatformat:2 }}</td>
+                        <td class="text-end px-4 py-3 fw-bold">₹{{ row.total|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox fs-1 mb-3 opacity-25"></i>
+                            <p>No transactions found for this period.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    @media print {
+        body * { visibility: hidden; }
+        .container-fluid, .container-fluid * { visibility: visible; }
+        .container-fluid { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; }
+        .btn, .card > div > form { display: none !important; }
+        .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+    }
+</style>
+
+<script>
+function exportCSV() {
+    let table = document.getElementById("gstTable");
+    let rows = table.querySelectorAll("tr");
+    let csv = [];
+    for (let i = 0; i < rows.length; i++) {
+        let row = [], cols = rows[i].querySelectorAll("td, th");
+        for (let j = 0; j < cols.length; j++) 
+            row.push(`"${cols[j].innerText.replace('₹','')}"`);
+        csv.push(row.join(","));
+    }
+    const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `GST_Report_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+}
+</script>
+{% endblock %}
