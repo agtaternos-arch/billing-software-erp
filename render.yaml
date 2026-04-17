@@ -32,22 +32,22 @@ services:
           property: port
       - key: CELERY_BROKER_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: billing-redis
           property: connectionString
       - key: CELERY_RESULT_BACKEND
         fromService:
-          type: redis
+          type: keyvalue
           name: billing-redis
           property: connectionString
       - key: ALLOWED_HOSTS
         value: "*" # You should update this later with your specific Render URL
 
+  - type: keyvalue
+    name: billing-redis
+    plan: free
+    ipAllowList: []
+
 databases:
   - name: billing-db
     plan: free
-
-redis:
-  - name: billing-redis
-    plan: free
-    ipAllowList: [] # Only allow internal connections
