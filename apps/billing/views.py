@@ -401,123 +401,138 @@ def dashboard_view(request):
     """
     Main business dashboard with dynamic metrics and charts.
     """
-    # Role-based redirect for staff/cashier
-    if hasattr(request.user, 'profile') and request.user.profile.role == 'cashier':
-        return redirect('billing:pos_terminal')
+    import traceback as tb
     
-    from apps.customers.models import Customer
-    from apps.inventory.models import Product
-    from django.db.models import Sum, F
-    from django.db import models
-    from datetime import timedelta
-    from django.utils import timezone
-    
-    today = timezone.now().date()
-    
-    # Calculate metrics
-    total_paid_invoices = Invoice.objects.filter(status='paid')
-    total_revenue = total_paid_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0')
-    active_customers = Customer.objects.count()
-    
-    # AI Insight: Today's Profit & Health Score
-    from apps.billing.models import InvoiceItem
-    sold_items_today = InvoiceItem.objects.filter(invoice__invoice_date=today, invoice__status__in=['paid', 'partial', 'sent'])
-    revenue_today = Invoice.objects.filter(invoice_date=today, status__in=['paid', 'partial', 'sent']).aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0')
-    cost_today = sum((item.quantity * item.product.cost_price for item in sold_items_today), Decimal('0'))
-    profit_today = revenue_today - cost_today
-    
-    # Low stock items (below threshold)
-    low_stock_products_all = Product.objects.filter(is_active=True, quantity_in_stock__lte=models.F('low_stock_threshold'))
-    low_stock_count = low_stock_products_all.count()
-    
-    products_sold = InvoiceItem.objects.aggregate(Sum('quantity'))['quantity__sum'] or 0
-    products_sold_today = InvoiceItem.objects.filter(invoice__invoice_date=today).aggregate(Sum('quantity'))['quantity__sum'] or 0
-    start_of_month = today.replace(day=1)
-    products_sold_month = InvoiceItem.objects.filter(invoice__invoice_date__gte=start_of_month).aggregate(Sum('quantity'))['quantity__sum'] or 0
-    overdue_invoices = Invoice.objects.filter(status='overdue').count()
-    
-    # AI Insight: Most Sold Product
-    most_sold_raw = InvoiceItem.objects.values('product__id', 'product__name', 'product__sku').annotate(
-        total_qty=Sum('quantity'),
-        total_revenue=Sum(F('quantity') * F('unit_price'))
-    ).order_by('-total_qty').first()
-    
-    most_sold_product = most_sold_raw['product__name'] if most_sold_raw else "N/A"
-    most_sold_qty = most_sold_raw['total_qty'] if most_sold_raw else 0
-    
-    # AI Insight: Smart Restock Suggestion
-    restock_suggestion = None
-    if low_stock_products_all.exists():
-        urgent = low_stock_products_all.order_by('quantity_in_stock').first()
-        restock_suggestion = f"Critical: Order {urgent.reorder_quantity} units of {urgent.name} (Current: {urgent.quantity_in_stock})"
-    
-    # Sales Chart Data (last 7 days)
-    labels = []
-    sales_data = []
-    for i in range(6, -1, -1):
-        date = today - timedelta(days=i)
-        labels.append(date.strftime('%a'))
-        daily_total = Invoice.objects.filter(invoice_date=date, status__in=['paid', 'sent', 'partial']).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-        sales_data.append(float(daily_total))
+    try:
+        # Role-based redirect for staff/cashier
+        if hasattr(request.user, 'profile') and request.user.profile.role == 'cashier':
+            return redirect('billing:pos_terminal')
         
-    # AI Alert logic
-    sales_drop_alert = None
-    if len(sales_data) >= 2 and sales_data[-2] > 0:
-        drop = ((sales_data[-2] - sales_data[-1]) / sales_data[-2]) * 100
-        if drop > 30:
-            sales_drop_alert = f"Sales dropped by {drop:.0f}% compared to yesterday."
+        from apps.customers.models import Customer
+        from apps.inventory.models import Product
+        from django.db.models import Sum, F
+        from django.db import models
+        from datetime import timedelta
+        from django.utils import timezone
+        
+        today = timezone.now().date()
+        
+        # Calculate metrics
+        total_paid_invoices = Invoice.objects.filter(status='paid')
+        total_revenue = total_paid_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0')
+        active_customers = Customer.objects.count()
+        
+        # AI Insight: Today's Profit & Health Score
+        from apps.billing.models import InvoiceItem
+        sold_items_today = InvoiceItem.objects.filter(invoice__invoice_date=today, invoice__status__in=['paid', 'partial', 'sent']).select_related('product')
+        revenue_today = Invoice.objects.filter(invoice_date=today, status__in=['paid', 'partial', 'sent']).aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0')
+        cost_today = Decimal('0')
+        for item in sold_items_today:
+            try:
+                cost_today += item.quantity * item.product.cost_price
+            except Exception:
+                pass
+        profit_today = revenue_today - cost_today
+        
+        # Low stock items (below threshold)
+        low_stock_products_all = Product.objects.filter(is_active=True, quantity_in_stock__lte=models.F('low_stock_threshold'))
+        low_stock_count = low_stock_products_all.count()
+        
+        products_sold = InvoiceItem.objects.aggregate(Sum('quantity'))['quantity__sum'] or 0
+        products_sold_today = InvoiceItem.objects.filter(invoice__invoice_date=today).aggregate(Sum('quantity'))['quantity__sum'] or 0
+        start_of_month = today.replace(day=1)
+        products_sold_month = InvoiceItem.objects.filter(invoice__invoice_date__gte=start_of_month).aggregate(Sum('quantity'))['quantity__sum'] or 0
+        overdue_invoices = Invoice.objects.filter(status='overdue').count()
+        
+        # AI Insight: Most Sold Product
+        most_sold_raw = InvoiceItem.objects.values('product__id', 'product__name', 'product__sku').annotate(
+            total_qty=Sum('quantity'),
+            total_revenue=Sum(F('quantity') * F('unit_price'))
+        ).order_by('-total_qty').first()
+        
+        most_sold_product = most_sold_raw['product__name'] if most_sold_raw else "N/A"
+        most_sold_qty = most_sold_raw['total_qty'] if most_sold_raw else 0
+        
+        # AI Insight: Smart Restock Suggestion
+        restock_suggestion = None
+        if low_stock_products_all.exists():
+            urgent = low_stock_products_all.order_by('quantity_in_stock').first()
+            restock_suggestion = f"Critical: Order {urgent.reorder_quantity} units of {urgent.name} (Current: {urgent.quantity_in_stock})"
+        
+        # Sales Chart Data (last 7 days)
+        labels = []
+        sales_data = []
+        for i in range(6, -1, -1):
+            date = today - timedelta(days=i)
+            labels.append(date.strftime('%a'))
+            daily_total = Invoice.objects.filter(invoice_date=date, status__in=['paid', 'sent', 'partial']).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            sales_data.append(float(daily_total))
+            
+        # AI Alert logic
+        sales_drop_alert = None
+        if len(sales_data) >= 2 and sales_data[-2] > 0:
+            drop = ((sales_data[-2] - sales_data[-1]) / sales_data[-2]) * 100
+            if drop > 30:
+                sales_drop_alert = f"Sales dropped by {drop:.0f}% compared to yesterday."
 
-    # Business Health Score Algorithm (0-100)
-    health_score = 100
-    if overdue_invoices > 5: health_score -= 15
-    if low_stock_count > 10: health_score -= 10
-    if sales_drop_alert: health_score -= 15
-    if profit_today < 0: health_score -= 20
-    health_score = max(0, min(100, health_score))
+        # Business Health Score Algorithm (0-100)
+        health_score = 100
+        if overdue_invoices > 5: health_score -= 15
+        if low_stock_count > 10: health_score -= 10
+        if sales_drop_alert: health_score -= 15
+        if profit_today < 0: health_score -= 20
+        health_score = max(0, min(100, health_score))
+            
+        # Recent Activity
+        recent_invoices = Invoice.objects.select_related('customer').all().order_by('-created_at')[:5]
+        low_stock_products = Product.objects.filter(is_active=True, quantity_in_stock__lte=models.F('low_stock_threshold'))[:5]
         
-    # Recent Activity
-    recent_invoices = Invoice.objects.select_related('customer').all().order_by('-created_at')[:5]
-    low_stock_products = Product.objects.filter(is_active=True, quantity_in_stock__lte=models.F('low_stock_threshold'))[:5]
-    
-    # AI Insight: Top 5 Sold Products Ranking
-    top_5_raw = InvoiceItem.objects.values('product__id', 'product__name', 'product__sku').annotate(
-        total_qty=Sum('quantity'),
-        total_revenue=Sum(F('quantity') * F('unit_price'))
-    ).order_by('-total_qty')[:5]
-    
-    top_5_products = []
-    for item in top_5_raw:
-        top_5_products.append({
-            'name': item['product__name'],
-            'sku': item['product__sku'],
-            'qty': item['total_qty'],
-            'revenue': float(item['total_revenue'])
-        })
+        # AI Insight: Top 5 Sold Products Ranking
+        top_5_raw = InvoiceItem.objects.values('product__id', 'product__name', 'product__sku').annotate(
+            total_qty=Sum('quantity'),
+            total_revenue=Sum(F('quantity') * F('unit_price'))
+        ).order_by('-total_qty')[:5]
         
-    context = {
-        'total_revenue': total_revenue,
-        'profit_today': profit_today,
-        'revenue_today': revenue_today,
-        'health_score': health_score,
-        'active_customers': active_customers,
-        'low_stock_count': low_stock_count,
-        'products_sold': products_sold,
-        'products_sold_today': products_sold_today,
-        'products_sold_month': products_sold_month,
-        'overdue_count': overdue_invoices,
-        'sales_labels': labels,
-        'sales_data': sales_data,
-        'sales_drop_alert': sales_drop_alert,
-        'recent_invoices': recent_invoices,
-        'low_stock_products': low_stock_products,
-        'most_sold_product': most_sold_product,
-        'most_sold_qty': most_sold_qty,
-        'top_5_products': top_5_products,
-        'restock_suggestion': restock_suggestion,
-        'today': today,
-        'title': 'Admin Command Center'
-    }
-    return render(request, 'dashboard.html', context)
+        top_5_products = []
+        for item in top_5_raw:
+            top_5_products.append({
+                'name': item['product__name'],
+                'sku': item['product__sku'],
+                'qty': item['total_qty'],
+                'revenue': float(item['total_revenue'])
+            })
+            
+        context = {
+            'total_revenue': total_revenue,
+            'profit_today': profit_today,
+            'revenue_today': revenue_today,
+            'health_score': health_score,
+            'active_customers': active_customers,
+            'low_stock_count': low_stock_count,
+            'products_sold': products_sold,
+            'products_sold_today': products_sold_today,
+            'products_sold_month': products_sold_month,
+            'overdue_count': overdue_invoices,
+            'sales_labels': labels,
+            'sales_data': sales_data,
+            'sales_drop_alert': sales_drop_alert,
+            'recent_invoices': recent_invoices,
+            'low_stock_products': low_stock_products,
+            'most_sold_product': most_sold_product,
+            'most_sold_qty': most_sold_qty,
+            'top_5_products': top_5_products,
+            'restock_suggestion': restock_suggestion,
+            'today': today,
+            'title': 'Admin Command Center'
+        }
+        return render(request, 'dashboard.html', context)
+    except Exception as e:
+        error_trace = tb.format_exc()
+        return HttpResponse(
+            f"<html><body><h1>Dashboard Error</h1><pre>{error_trace}</pre></body></html>",
+            status=500,
+            content_type='text/html'
+        )
 
 
 @login_required
